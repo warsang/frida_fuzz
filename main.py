@@ -14,48 +14,30 @@ def main():
     session = device.attach(pid)
 
     script = session.create_script("""
+    // Helper function to convert ArrayBuffer to hex string
+    function arrayBufferToHex(buffer) {
+        return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+    }
+
+    // Function to format backtrace (simplified for JSON)
     function formatBacktrace(backtrace) {
         return backtrace
             .map(DebugSymbol.fromAddress)
-            .map(function(symbol) {
-                var name = symbol.name || "???";
-                return `\\t${symbol.address} -> ${name}`;
-            })
-            .join('\\n');
+            .map(symbol => `${symbol.address} -> ${symbol.name || "???"}`); // Return as an array of strings
     }
 
-     function formatHexdump(ptr, length) {
+    // Function to get hex string from buffer
+    function getHexData(ptr, length) {
+        if (length <= 0) {
+            return ""; // Return empty string for zero length
+        }
         try {
-            const arr = new Uint8Array(ptr.readByteArray(length));
-            let result = '';
-            let ascii = '';
-            let offset = 0;
-
-            for (let i = 0; i < arr.length; i++) {
-                if (i % 16 === 0) {
-                    if (i !== 0) {
-                        result += '  ' + ascii + '\\n';
-                        ascii = '';
-                    }
-                    offset = i.toString(16).padStart(4, '0');
-                    result += offset + '  ';
-                }
-                
-                const byte = arr[i];
-                result += byte.toString(16).padStart(2, '0') + ' ';
-                ascii += (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
-                
-                if ((i + 1) % 16 === 0 || i === arr.length - 1) {
-                    const padding = '   '.repeat(15 - (i % 16));
-                    result += padding + '  ' + ascii;
-                    if (i !== arr.length - 1) {
-                        result += '\\n';
-                    }
-                }
-            }
-            return result;
+            const buffer = ptr.readByteArray(length);
+            return arrayBufferToHex(buffer);
         } catch (e) {
-            return `Error reading buffer: ${e.message}`;
+            // Send error back to Python side if reading fails
+            send({ type: 'error', source: 'getHexData', message: `Error reading buffer: ${e.message}` });
+            return ""; // Return empty string on error
         }
     }
 
@@ -105,22 +87,29 @@ def main():
                     var flags = args[3].toInt32();
                     
                     var socketInfo = getSocketInfo(socket);
-                    var backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
-                    const hexDump = (len > 0) ? formatHexdump(buf, len) : "Empty buffer";
+                    var backtrace_raw = Thread.backtrace(this.context, Backtracer.ACCURATE);
+                    const hexData = getHexData(buf, len); // Use the new function
 
-                    send(funcName + '() called:\\n' +
-                         '  Socket: ' + socket + '\\n' +
-                         '  Remote: ' + socketInfo + '\\n' +
-                         '  Buffer Length: ' + len + ' bytes\\n' +
-                         '  Flags: ' + flags + '\\n' +
-                         '\\nBuffer Contents:\\n' + hexDump + '\\n' +
-                         '\\nCallstack (address -> function):\\n' + formatBacktrace(backtrace));
+                    // Construct JSON payload
+                    const payload = {
+                        type: 'sequence', // Indicate this is sequence data
+                        function_name: funcName,
+                        socket_id: socket,
+                        socket_info: socketInfo,
+                        buffer_length: len,
+                        flags: flags,
+                        hex_data: hexData, // Send raw hex string
+                        backtrace: formatBacktrace(backtrace_raw) // Send formatted backtrace array
+                    };
+                    send(payload); // Send the JSON object
                 } catch (e) {
-                    send(`Error in onEnter: ${e.message}`);
+                    // Send error back to Python side
+                    send({ type: 'error', source: 'onEnter', message: `Error in ${funcName}: ${e.message}` });
                 }
             },
             onLeave: function(retval) {
-                send(funcName + '() returned: ' + retval);
+                // Optionally send return value info (can be filtered in Python)
+                send({ type: 'return', function_name: funcName, retval: retval.toInt32() });
             }
         });
     });
