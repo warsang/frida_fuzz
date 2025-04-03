@@ -250,13 +250,24 @@ def create_packet_type(sender, app_data):
         dpg.set_value("type_hex_offset_input", 0)
         dpg.set_value("type_size_input", 0)
         dpg.set_value("type_callstack_input", "")
+        
+        # Update existing sequences with the new type
+        update_existing_sequences_types()
+        
+        # Update UI
         update_packet_types_list()
+        update_sequences_list()
 
 def delete_packet_type(sender, app_data, user_data):
     """Delete a packet type"""
     type_name = user_data
     if packet_type_manager.delete_type(type_name):
+        # Update existing sequences after type deletion
+        update_existing_sequences_types()
+        
+        # Update UI
         update_packet_types_list()
+        update_sequences_list()
 
 def update_packet_types_list():
     """Update the packet types list in the UI"""
@@ -301,6 +312,21 @@ def remove_packet_type(sender, app_data, user_data):
             save_sequences()
             show_sequence_details(None, None, seq)
             break
+
+def update_existing_sequences_types():
+    """Update packet types for all existing sequences"""
+    global sequences
+    for seq in sequences:
+        try:
+            data = bytes.fromhex(seq['hex_data'])
+            callstack = "\n".join(seq['backtrace'])
+            packet_type = packet_type_manager.matches_type(data, seq['buffer_length'], callstack)
+            seq['packet_type'] = packet_type if packet_type else 'undefined'
+        except ValueError:
+            print(f"Invalid hex data in sequence {seq['id']}")
+    
+    # Save updated sequences
+    save_sequences()
 
 def update_sequence_regions(sequence_id, regions):
     """Update fuzzable regions for a sequence and save to file"""
