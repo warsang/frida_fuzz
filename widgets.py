@@ -1,12 +1,7 @@
 import dearpygui.dearpygui as dpg
 from dataclasses import dataclass
-from typing import Optional, List, Tuple
-
-@dataclass
-class FuzzableRegion:
-    start_offset: int
-    end_offset: int
-    mutation_type: str
+from typing import Optional, List, Tuple, Dict, Any
+from marker_manager import MarkerManager, MarkerRegion
 
 @dataclass
 class Selection:
@@ -21,22 +16,23 @@ class HexdumpWidget:
             tag: Unique identifier for the widget
             width: Widget width in pixels
             height: Widget height in pixels
-            on_regions_changed: Callback function when fuzzable regions are modified
+            on_regions_changed: Callback function when markers are modified
         """
         self.tag = tag
         self.width = width
         self.height = height
         self.data = bytes()  # Raw byte data
-        self.fuzzable_regions: List[FuzzableRegion] = []
+        self.marked_regions: List[MarkerRegion] = []
         self.current_selection: Optional[Selection] = None
         self.is_selecting = False
         self.selection_start_pos = (0, 0)
         self.sequence_id = None  # Current sequence ID being displayed
         self.on_regions_changed = on_regions_changed
+        self.marker_manager = MarkerManager()
         
         # Colors
         self.selection_color = (255, 255, 0, 100)  # Light yellow, semi-transparent
-        self.fuzzable_color = (100, 149, 237, 100)  # Cornflower blue, semi-transparent
+        self.marker_colors = {}  # Will be populated from marker_manager
         
         # Create the widget
         with dpg.child_window(tag=self.tag, width=self.width, height=self.height):
@@ -58,81 +54,210 @@ class HexdumpWidget:
             
             # Add context menu
             with dpg.popup(self.click_area, tag=f"{self.tag}_context_menu", mousebutton=dpg.mvMouseButton_Right):
-                with dpg.menu(label="Mark as Fuzzable"):
-                    dpg.add_menu_item(label="Size Field", callback=lambda: self._mark_fuzzable("size_field"))
-                    dpg.add_menu_item(label="Checksum", callback=lambda: self._mark_fuzzable("checksum"))
-                    dpg.add_menu_item(label="Data Field", callback=lambda: self._mark_fuzzable("data"))
-                    dpg.add_menu_item(label="Magic Constant", callback=lambda: self._mark_fuzzable("magic"))
-                    dpg.add_menu_item(label="Delimiter", callback=lambda: self._mark_fuzzable("delimiter"))
-                dpg.add_menu_item(label="Remove Fuzzable Mark", callback=self._remove_fuzzable)
+                # Built-in markers submenu
+                with dpg.menu(label="Add Built-in Marker"):
+                    for marker_type in self.marker_manager.get_builtin_marker_types():
+                        dpg.add_menu_item(
+                            label=marker_type.display_name,
+                            callback=lambda s, a, mt=marker_type: self._add_marker(mt.name)
+                        )
+                
+                # Custom markers submenu
+                with dpg.menu(label="Add Custom Marker"):
+                    for marker_type in self.marker_manager.get_custom_marker_types():
+                        dpg.add_menu_item(
+                            label=marker_type.display_name,
+                            callback=lambda s, a, mt=marker_type: self._add_marker(mt.name)
+                        )
+                    dpg.add_separator()
+                    dpg.add_menu_item(label="Create New Marker Type...", callback=self._create_marker_type)
+                dpg.add_menu_item(label="Remove Marker", callback=self._remove_marker)
                 dpg.add_separator()
                 dpg.add_menu_item(label="Copy Selection", callback=self._copy_selection)
                 dpg.add_menu_item(label="Copy as Hex", callback=self._copy_as_hex)
         
-
-    def set_data(self, data: bytes, sequence_id=None):
+    def set_data(self, data: bytes, sequence_id=None, markers=None):
         """Set the byte data to display.
         
         Args:
             data: Raw bytes to display in the hexdump
             sequence_id: ID of the sequence being displayed
+            markers: List of markers to apply
         """
         self.data = data
         self.sequence_id = sequence_id
         self.current_selection = None
+        
+        # Update markers
+        self.marked_regions = []
+        if markers:
+            for marker in markers:
+                marker_type = self.marker_manager.get_marker_type(marker.tag_type)
+                if marker_type:
+                    self.marked_regions.append(marker)
+                    self.marker_colors[marker.tag_type] = self._parse_color(marker_type.color)
+        
         self.render()
 
-    def add_fuzzable_region(self, start: int, end: int, mutation_type: str) -> bool:
-        """Add a new fuzzable region if it doesn't overlap with existing ones.
-        
-        Args:
-            start: Start offset in bytes
-            end: End offset in bytes
-            mutation_type: Type of mutation strategy to use
+    def _add_marker(self, marker_type_name: str):
+        """Add a marker of the specified type to the current selection."""
+        if not self.current_selection:
+            return
             
-        Returns:
-            bool: True if region was added, False if it would overlap
-        """
+        marker_type = self.marker_manager.get_marker_type(marker_type_name)
+        if not marker_type:
+            return
+            
         # Check for overlaps
-        for region in self.fuzzable_regions:
-            if (start <= region.end_offset and end >= region.start_offset):
-                return False
+        for region in self.marked_regions:
+            if (self.current_selection.start_offset <= region.end_offset and
+                self.current_selection.end_offset >= region.start_offset):
+                return
                 
-        self.fuzzable_regions.append(FuzzableRegion(start, end, mutation_type))
-        self.render()
-        if self.on_regions_changed and self.sequence_id is not None:
-            self.on_regions_changed(self.sequence_id, self.fuzzable_regions)
-        return True
-
-    def remove_fuzzable_region(self, offset: int):
-        """Remove fuzzable region containing the given offset.
+        # Create new marker region
+        new_marker = MarkerRegion(
+            start_offset=self.current_selection.start_offset,
+            end_offset=self.current_selection.end_offset,
+            tag_name=marker_type.name,
+            tag_type=marker_type.name,
+            properties=marker_type.default_properties.copy()
+        )
+        self.marked_regions.append(new_marker)
         
-        Args:
-            offset: Byte offset to check for removal
-        """
-        self.fuzzable_regions = [
-            r for r in self.fuzzable_regions 
-            if not (r.start_offset <= offset <= r.end_offset)
+        # Update marker colors
+        if marker_type.name not in self.marker_colors:
+            self.marker_colors[marker_type.name] = self._parse_color(marker_type.color)
+        
+        # Clear selection and update display
+        self.current_selection = None
+        self.render()
+        
+        # Notify of changes if callback is set
+        if self.on_regions_changed and self.sequence_id is not None:
+            self.on_regions_changed(self.sequence_id, self.marked_regions)
+
+    def _remove_marker(self):
+        """Remove marker at current selection/click position."""
+        if not self.current_selection:
+            return
+            
+        self.marked_regions = [
+            r for r in self.marked_regions 
+            if not (r.start_offset <= self.current_selection.start_offset <= r.end_offset)
         ]
         self.render()
+        
         if self.on_regions_changed and self.sequence_id is not None:
-            self.on_regions_changed(self.sequence_id, self.fuzzable_regions)
+            self.on_regions_changed(self.sequence_id, self.marked_regions)
 
-    def _mark_fuzzable(self, mutation_type: str):
-        """Mark the current selection as a fuzzable region."""
-        if self.current_selection:
-            if self.add_fuzzable_region(
-                self.current_selection.start_offset,
-                self.current_selection.end_offset,
-                mutation_type
-            ):
-                self.current_selection = None
-                self.render()
+    def _parse_color(self, color_str: str) -> Tuple[int, int, int, int]:
+        """Convert hex color string to RGBA tuple."""
+        # Remove '#' if present
+        color_str = color_str.lstrip('#')
+        # Convert hex to RGB
+        r = int(color_str[0:2], 16)
+        g = int(color_str[2:4], 16)
+        b = int(color_str[4:6], 16)
+        # Add alpha
+        return (r, g, b, 100)
 
-    def _remove_fuzzable(self):
-        """Remove fuzzable region at current selection/click position."""
-        if self.current_selection:
-            self.remove_fuzzable_region(self.current_selection.start_offset)
+    def _create_marker_type(self):
+        """Open dialog to create a new marker type."""
+        dialog_tag = f"{self.tag}_marker_dialog"
+        
+        def create_callback(sender, app_data, user_data):
+            name_tag, display_name_tag, color_tag, dialog_tag = user_data
+            name = dpg.get_value(name_tag)
+            display_name = dpg.get_value(display_name_tag)
+            color = dpg.get_value(color_tag)
+            print(f"Creating marker with name={name}, display_name={display_name}, color={color}")
+            self._finish_create_marker_type(name, display_name, color, dialog_tag)
+        
+        with dpg.window(label="Create New Marker Type", modal=True, width=400, tag=dialog_tag):
+            name_tag = f"{dialog_tag}_name"
+            display_name_tag = f"{dialog_tag}_display_name"
+            color_tag = f"{dialog_tag}_color"
+            
+            dpg.add_input_text(label="Name", hint="marker_name", tag=name_tag)
+            dpg.add_input_text(label="Display Name", hint="Marker Display Name", tag=display_name_tag)
+            dpg.add_color_picker(label="Color", no_alpha=True, default_value=[100, 149, 237], tag=color_tag)
+            
+            dpg.add_button(
+                label="Create",
+                callback=create_callback,
+                user_data=(name_tag, display_name_tag, color_tag, dialog_tag)
+            )
+
+    def _finish_create_marker_type(self, name: str, display_name: str, color: List[int], dialog_tag: str):
+        """Handle creation of new marker type from dialog input."""
+        if not name or not display_name:
+            print("Error: Name or display name is empty")
+            return
+            
+        # Sanitize name (remove spaces and special characters)
+        name = "".join(c for c in name if c.isalnum() or c == '_').lower()
+        if not name:
+            print("Error: Invalid name after sanitization")
+            return
+            
+        # Convert RGB values to hex string
+        try:
+            color_hex = "#{:02x}{:02x}{:02x}".format(
+                int(color[0]),
+                int(color[1]),
+                int(color[2])
+            )
+            print(f"Creating marker type: {name} ({display_name}) with color {color_hex}")
+        except (TypeError, IndexError, ValueError) as e:
+            print(f"Error converting color: {e}")
+            return
+        
+        # Create new marker type
+        if self.marker_manager.create_marker_type(name, display_name, color_hex):
+            print(f"Successfully created marker type: {name}")
+            # Update marker colors
+            self.marker_colors[name] = (color[0], color[1], color[2], 100)
+            # Close dialog
+            dpg.delete_item(dialog_tag)
+            # Apply marker if there's a selection
+            if self.current_selection:
+                print(f"Applying marker {name} to selection")
+                self._add_marker(name)
+            # Refresh context menu
+            self._refresh_context_menu()
+        else:
+            print(f"Failed to create marker type: {name}")
+            
+    def _refresh_context_menu(self):
+        """Refresh the context menu to show new marker types."""
+        menu_tag = f"{self.tag}_context_menu"
+        
+        # Delete old menu items
+        dpg.delete_item(menu_tag, children_only=True)
+        
+        # Rebuild menu
+        with dpg.popup(self.click_area, tag=menu_tag, mousebutton=dpg.mvMouseButton_Right):
+            # Built-in markers submenu
+            with dpg.menu(label="Add Built-in Marker"):
+                for marker_type in self.marker_manager.get_builtin_marker_types():
+                    dpg.add_menu_item(
+                        label=marker_type.display_name,
+                        callback=lambda s, a, mt=marker_type: self._add_marker(mt.name)
+                    )
+            
+            # Custom markers submenu
+            with dpg.menu(label="Add Custom Marker"):
+                for marker_type in self.marker_manager.get_custom_marker_types():
+                    dpg.add_menu_item(
+                        label=marker_type.display_name,
+                        callback=lambda s, a, mt=marker_type: self._add_marker(mt.name)
+                    )
+                dpg.add_separator()
+                dpg.add_menu_item(label="Create New Marker Type...", callback=self._create_marker_type)
+            dpg.add_menu_item(label="Remove Marker", callback=self._remove_marker)
+            dpg.add_separator()
+            dpg.add_menu_item(label="Copy Selection", callback=self._copy_selection)
+            dpg.add_menu_item(label="Copy as Hex", callback=self._copy_as_hex)
 
     def _copy_selection(self):
         """Copy selected bytes as ASCII."""
@@ -276,12 +401,15 @@ class HexdumpWidget:
                 group_idx = j // hex_group_size
                 byte_x = hex_x + (j * 3 + group_idx * 2) * char_width
                 
-                # Check if this byte is in a fuzzable region
+                # Check if this byte is in a marked region
                 byte_offset = i + j
-                is_fuzzable = any(
-                    r.start_offset <= byte_offset <= r.end_offset
-                    for r in self.fuzzable_regions
-                )
+                marker_color = None
+                for region in self.marked_regions:
+                    if region.start_offset <= byte_offset <= region.end_offset:
+                        color = self.marker_colors.get(region.tag_type)
+                        if color:
+                            marker_color = color
+                            break
                 
                 # Check if this byte is selected
                 is_selected = (
@@ -290,17 +418,17 @@ class HexdumpWidget:
                 )
                 
                 # Draw highlight backgrounds if needed
-                if is_fuzzable or is_selected:
+                if marker_color or is_selected:
                     highlight_width = char_width * 2  # Width of two hex chars
                     highlight_height = char_height
-                    color = self.selection_color if is_selected else self.fuzzable_color
+                    highlight_color = self.selection_color if is_selected else marker_color
                     
                     # Highlight hex
                     dpg.draw_rectangle(
                         parent=self.canvas,
                         pmin=(byte_x, line_y),
                         pmax=(byte_x + highlight_width, line_y + highlight_height),
-                        fill=color
+                        fill=highlight_color
                     )
                     
                     # Highlight ASCII
@@ -309,7 +437,7 @@ class HexdumpWidget:
                         parent=self.canvas,
                         pmin=(ascii_highlight_x, line_y),
                         pmax=(ascii_highlight_x + char_width, line_y + highlight_height),
-                        fill=color
+                        fill=highlight_color
                     )
                 
                 # Draw hex value

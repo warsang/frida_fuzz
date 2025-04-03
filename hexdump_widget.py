@@ -1,14 +1,16 @@
 import dearpygui.dearpygui as dpg
 from dataclasses import dataclass
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, Any
 import struct
+from marker_manager import MarkerManager, MarkerRegion, MarkerType
 
 @dataclass
-class FuzzableRegion:
+class MarkedRegion:
     start_offset: int
     end_offset: int
-    mutation_type: str
-
+    tag_name: str
+    tag_type: str
+    properties: Dict[str, Any]
 @dataclass
 class Selection:
     start_offset: int
@@ -33,19 +35,21 @@ class HexdumpWidget:
         self.width = width
         self.height = height
         self.data = bytes()
-        self.fuzzable_regions: List[FuzzableRegion] = []
+        self.marked_regions: List[MarkedRegion] = []
         self.current_selection: Optional[Selection] = None
+        self.marker_manager = MarkerManager()
         self.is_selecting = False
         self.sequence_id = None
         self.on_regions_changed = on_regions_changed
         self.options = HexdumpOptions()
         self.addr_input = ""  # For goto address feature
         self.hovered_offset: Optional[int] = None  # For tooltips
+        self.tooltip_tag = f"{self.tag}_tooltip"  # Tag for marker tooltip
         
         # Colors
         self.selection_color = (255, 255, 0, 100)  # Light yellow
-        self.fuzzable_color = (100, 149, 237, 100)  # Cornflower blue
         self.text_color = (255, 255, 255, 255)  # White
+        self.marker_colors = {}  # Will be populated from marker_manager
         self.disabled_color = (128, 128, 128, 255)  # Grey for zero bytes
         self.separator_color = (128, 128, 128, 100)  # Grey for separator
         self.statusbar_color = (70, 70, 70, 255)  # Dark grey for status bar
@@ -139,14 +143,18 @@ class HexdumpWidget:
                         dpg.add_text("Jump to specific hex address")
                 
                 dpg.add_separator()
-                # Fuzzable region submenu
-                with dpg.menu(label="Mark as Fuzzable"):
-                    dpg.add_menu_item(label="Size Field", callback=lambda: self._mark_fuzzable("size_field"))
-                    dpg.add_menu_item(label="Checksum", callback=lambda: self._mark_fuzzable("checksum"))
-                    dpg.add_menu_item(label="Data Field", callback=lambda: self._mark_fuzzable("data"))
-                    dpg.add_menu_item(label="Magic Constant", callback=lambda: self._mark_fuzzable("magic"))
-                    dpg.add_menu_item(label="Delimiter", callback=lambda: self._mark_fuzzable("delimiter"))
-                dpg.add_menu_item(label="Remove Fuzzable Mark", callback=self._remove_fuzzable)
+                # Built-in markers submenu
+                with dpg.menu(label="Add Built-in Marker"):
+                    for marker_type in self.marker_manager.get_builtin_marker_types():
+                        dpg.add_menu_item(
+                            label=marker_type.display_name,
+                            callback=lambda s, a, mt=marker_type: self._add_marker(mt.name)
+                        )
+                
+                # Custom markers submenu
+                self.custom_markers_menu = dpg.add_menu(label="Add Custom Marker", tag=f"{self.tag}_custom_markers_menu")
+                self._refresh_custom_markers_menu()
+                dpg.add_menu_item(label="Remove Marker", callback=self._remove_marker)
                 dpg.add_separator()
                 dpg.add_menu_item(label="Copy Selection", callback=self._copy_selection)
                 dpg.add_menu_item(label="Copy as Hex", callback=self._copy_as_hex)
@@ -326,7 +334,6 @@ class HexdumpWidget:
                     # New selection
                     self.current_selection = Selection(start_offset, start_offset)
                 self.render()
-
     def _on_hover(self, sender, app_data):
         """Handle mouse hover/drag."""
         if not self.data:
@@ -338,7 +345,25 @@ class HexdumpWidget:
         # Update hovered offset
         self.hovered_offset = self._get_offset_at_position(x, y)
         self._update_status_bar()
+
+        # Handle marker tooltips
+        if self.hovered_offset is not None:
+            marker = self._get_marker_at_offset(self.hovered_offset)
+            if marker:
+                marker_type = self.marker_manager.get_marker_type(marker.tag_type)
+                if marker_type:
+                    # Create or update tooltip
+                    if not dpg.does_item_exist(self.tooltip_tag):
+                        with dpg.tooltip(parent=self.canvas, tag=self.tooltip_tag):
+                            dpg.add_text("", tag=f"{self.tooltip_tag}_text")
+                    dpg.set_value(f"{self.tooltip_tag}_text", marker_type.display_name)
+                    dpg.configure_item(self.tooltip_tag, show=True)
+                    return
         
+        # Hide tooltip if not over a marker
+        if dpg.does_item_exist(self.tooltip_tag):
+            dpg.configure_item(self.tooltip_tag, show=False)
+            
         # Update selection if dragging
         if self.is_selecting and dpg.is_mouse_button_down(dpg.mvMouseButton_Left):
             end_offset = self.hovered_offset
@@ -402,22 +427,176 @@ class HexdumpWidget:
             return offset
         return None
 
-    def _mark_fuzzable(self, mutation_type: str):
-        """Mark the current selection as a fuzzable region."""
-        if self.current_selection:
-            if self.add_fuzzable_region(
-                self.current_selection.start_offset,
-                self.current_selection.end_offset,
-                mutation_type
-            ):
-                self.current_selection = None
-                self.render()
+    def _refresh_custom_markers_menu(self):
+        """Refresh the custom markers menu with current marker types."""
+        # Clear existing menu items
+        if dpg.does_item_exist(self.custom_markers_menu):
+            dpg.delete_item(self.custom_markers_menu, children_only=True)
+        
+        # Add menu items for each custom marker type
+        for marker_type in self.marker_manager.get_custom_marker_types():
+            marker_name = marker_type.name # Ensure we capture the name for user_data
+            dpg.add_menu_item(
+                parent=self.custom_markers_menu,
+                label=marker_type.display_name,
+                # Pass the marker name as user_data
+                user_data=marker_name,
+                # The callback now receives the name via the third argument (user_data)
+                callback=lambda sender, app_data, user_data: self._add_marker(user_data)
+            )
+        dpg.add_separator(parent=self.custom_markers_menu)
+        dpg.add_menu_item(
+            parent=self.custom_markers_menu,
+            label="Create New Marker Type...",
+            callback=self._create_marker_type
+        )
 
-    def _remove_fuzzable(self):
-        """Remove fuzzable region at current selection/click position."""
-        if self.current_selection:
-            self.remove_fuzzable_region(self.current_selection.start_offset)
+    def _get_marker_at_offset(self, offset: int) -> Optional[MarkedRegion]:
+        """Get marker at the specified offset."""
+        for region in self.marked_regions:
+            if region.start_offset <= offset <= region.end_offset:
+                return region
+        return None
 
+    def _add_marker(self, marker_type_name: str):
+        """Add a marker of the specified type to the current selection."""
+        if not self.current_selection:
+            print("No selection to apply marker to")
+            return
+            
+        marker_type = self.marker_manager.get_marker_type(marker_type_name)
+        if not marker_type:
+            print(f"Marker type '{marker_type_name}' not found")
+            return
+            
+        # Check for overlaps
+        for region in self.marked_regions:
+            if (self.current_selection.start_offset <= region.end_offset and
+                self.current_selection.end_offset >= region.start_offset):
+                print("Cannot apply marker - overlaps with existing marker")
+                return
+                
+        # Create new marker region
+        self.marked_regions.append(MarkedRegion(
+            start_offset=self.current_selection.start_offset,
+            end_offset=self.current_selection.end_offset,
+            tag_name=marker_type.name,
+            tag_type=marker_type.name,
+            properties=marker_type.default_properties.copy()
+        ))
+        
+        # Update marker colors
+        self.marker_colors[marker_type.name] = self._parse_color(marker_type.color)
+        
+        # Clear selection and update display
+        self.current_selection = None
+        self.render()
+        
+        # Notify of changes if callback is set
+        if self.on_regions_changed and self.sequence_id is not None:
+            self.on_regions_changed(self.sequence_id, self.marked_regions)
+    
+    def _parse_color(self, color_str: str) -> Tuple[int, int, int, int]:
+        """Convert hex color string to RGBA tuple."""
+        # Remove '#' if present
+        color_str = color_str.lstrip('#')
+        # Convert hex to RGB
+        r = int(color_str[0:2], 16)
+        g = int(color_str[2:4], 16)
+        b = int(color_str[4:6], 16)
+        # Add alpha
+        return (r, g, b, 100)
+    
+    def _create_marker_type(self):
+        """Open dialog to create a new marker type."""
+        # Generate unique tags for the dialog widgets
+        window_tag = dpg.generate_uuid()
+        name_input_tag = dpg.generate_uuid()
+        display_name_input_tag = dpg.generate_uuid()
+        color_picker_tag = dpg.generate_uuid()
+
+        with dpg.window(label="Create New Marker Type", modal=True, width=400, tag=window_tag, no_close=True):
+            dpg.add_input_text(label="Name", hint="unique_marker_name", tag=name_input_tag)
+            dpg.add_input_text(label="Display Name", hint="Marker Display Name", tag=display_name_input_tag)
+            dpg.add_color_picker(label="Color", no_alpha=True, tag=color_picker_tag)
+            with dpg.group(horizontal=True):
+                dpg.add_button(
+                    label="Create",
+                    callback=lambda: self._finish_create_marker_type(
+                        window_tag, # Pass window tag
+                        name_input_tag,
+                        display_name_input_tag,
+                        color_picker_tag
+                    )
+                )
+                dpg.add_button(label="Cancel", callback=lambda: dpg.delete_item(window_tag))
+    
+    def _finish_create_marker_type(self, window_tag, name_tag, display_name_tag, color_tag):
+        """Handle creation of new marker type from dialog input and apply it."""
+        name = dpg.get_value(name_tag)
+        display_name = dpg.get_value(display_name_tag)
+        color = dpg.get_value(color_tag) # Color is List[float] from 0-255
+
+        # Basic validation
+        if not name or not display_name:
+            # TODO: Show an error message in the dialog instead of just returning
+            print("Error: Marker Name and Display Name cannot be empty.")
+            # Maybe add a text widget to the dialog to show errors?
+            return
+        if not name.isidentifier():
+             print(f"Error: Marker Name '{name}' is not a valid Python identifier.")
+             # TODO: Show error in dialog
+             return
+
+
+        # Convert color from 0-255 float list to hex string #RRGGBB
+        color_hex = "#{:02x}{:02x}{:02x}".format(
+            int(color[0]),
+            int(color[1]),
+            int(color[2])
+        )
+
+        # Attempt to create the new marker type
+        if self.marker_manager.create_marker_type(name, display_name, color_hex):
+            print(f"Marker type '{name}' created successfully.")
+            
+            # Refresh the custom markers menu
+            self._refresh_custom_markers_menu()
+            
+            # Apply the newly created marker to the current selection, if any
+            # Check if there is a selection *before* closing the dialog
+            selection_exists = self.current_selection is not None
+            
+            # Close the dialog window now that we have the values
+            if dpg.does_item_exist(window_tag):
+                dpg.delete_item(window_tag)
+                
+            # Apply marker if a selection existed
+            if selection_exists:
+                self._add_marker(name)  # This calls render() internally if successful
+            else:
+                # If no selection, we still need to potentially update the context menu
+                self.render()  # Re-render to update context menu with new type
+
+        else:
+            # Handle marker creation failure (e.g., name conflict)
+            # TODO: Show an error message in the dialog instead of just printing
+            print(f"Error: Failed to create marker type '{name}'. It might already exist or be invalid.")
+            # Keep the dialog open so the user can correct the input
+            # Maybe add an error message text widget to the dialog?
+    def _remove_marker(self):
+        """Remove marker at current selection/click position."""
+        if not self.current_selection:
+            return
+            
+        self.marked_regions = [
+            r for r in self.marked_regions
+            if not (r.start_offset <= self.current_selection.start_offset <= r.end_offset)
+        ]
+        self.render()
+        
+        if self.on_regions_changed and self.sequence_id is not None:
+            self.on_regions_changed(self.sequence_id, self.marked_regions)
     def _copy_selection(self):
         """Copy selected bytes as ASCII."""
         if self.current_selection:
@@ -431,37 +610,28 @@ class HexdumpWidget:
             hex_str = selected.hex() if not self.options.uppercase_hex else selected.hex().upper()
             dpg.set_clipboard_text(hex_str)
 
-    def set_data(self, data: bytes, sequence_id=None):
+    def set_data(self, data: bytes, sequence_id=None, markers=None):
         """Set the byte data to display."""
         self.data = data
         self.sequence_id = sequence_id
         self.current_selection = None
         self.options.scroll_to_addr = None
         self.hovered_offset = None
+        
+        # Update markers
+        self.marked_regions = []
+        if markers:
+            for marker in markers:
+                marker_type = self.marker_manager.get_marker_type(marker.tag_type)
+                if marker_type:
+                    self.marked_regions.append(marker)
+                    self.marker_colors[marker.tag_type] = self._parse_color(marker_type.color)
+        
         self.render()
 
-    def add_fuzzable_region(self, start: int, end: int, mutation_type: str) -> bool:
-        """Add a new fuzzable region if it doesn't overlap with existing ones."""
-        # Check for overlaps
-        for region in self.fuzzable_regions:
-            if (start <= region.end_offset and end >= region.start_offset):
-                return False
-                
-        self.fuzzable_regions.append(FuzzableRegion(start, end, mutation_type))
-        self.render()
-        if self.on_regions_changed and self.sequence_id is not None:
-            self.on_regions_changed(self.sequence_id, self.fuzzable_regions)
-        return True
-
-    def remove_fuzzable_region(self, offset: int):
-        """Remove fuzzable region containing the given offset."""
-        self.fuzzable_regions = [
-            r for r in self.fuzzable_regions 
-            if not (r.start_offset <= offset <= r.end_offset)
-        ]
-        self.render()
-        if self.on_regions_changed and self.sequence_id is not None:
-            self.on_regions_changed(self.sequence_id, self.fuzzable_regions)
+    def get_markers(self) -> List[MarkedRegion]:
+        """Get all markers in the current view."""
+        return self.marked_regions.copy()
 
     def render(self):
         """Render the hexdump display."""
@@ -522,11 +692,13 @@ class HexdumpWidget:
                 byte_x = hex_x + (j * 3 + group_idx * 2) * char_width
                 byte_offset = i + j
                 
-                # Check if this byte is in a fuzzable region or selected
-                is_fuzzable = any(
-                    r.start_offset <= byte_offset <= r.end_offset
-                    for r in self.fuzzable_regions
-                )
+                # Check if this byte is in a marked region or selected
+                marker_color = None
+                for region in self.marked_regions:
+                    if region.start_offset <= byte_offset <= region.end_offset:
+                        marker_color = self.marker_colors.get(region.tag_type)
+                        break
+                        
                 is_selected = (
                     self.current_selection and
                     self.current_selection.start_offset <= byte_offset <= self.current_selection.end_offset
@@ -538,10 +710,10 @@ class HexdumpWidget:
                 )
                 
                 # Draw highlight backgrounds if needed
-                if is_fuzzable or is_selected:
+                if marker_color or is_selected:
                     highlight_width = char_width * 2.5  # Width of two hex chars plus space
                     highlight_height = char_height
-                    color = self.selection_color if is_selected else self.fuzzable_color
+                    color = self.selection_color if is_selected else marker_color
                     
                     # Highlight hex
                     dpg.draw_rectangle(

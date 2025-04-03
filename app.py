@@ -50,9 +50,9 @@ def process_messages():
                     # Add ID if not present
                     if 'id' not in message:
                         message['id'] = len(sequences) + 1
-                    # Add fuzzable_regions if not present
-                    if 'fuzzable_regions' not in message:
-                        message['fuzzable_regions'] = []
+                    # Add markers if not present
+                    if 'markers' not in message:
+                        message['markers'] = []
                     sequences.append(message)
                     # Update console
                     console_text = dpg.get_value("console") + "\n" + json.dumps(message, indent=2)
@@ -187,12 +187,15 @@ def show_sequence_details(sender, app_data, user_data):
         f"Packet Type: {seq.get('packet_type', 'undefined')}\n\n"
         f"Raw Hex Data:\n{seq['hex_data']}\n\n"
         f"Backtrace:\n" + "\n".join(seq['backtrace']) + "\n\n"
-        f"Fuzzable Regions:\n"
+        f"Markers:\n"
     )
     
-    if seq.get('fuzzable_regions'):
-        for region in seq['fuzzable_regions']:
-            details += f"  {region['start_offset']}-{region['end_offset']}: {region['mutation_type']}\n"
+    if seq.get('markers'):
+        for marker in seq['markers']:
+            details += f"  {marker['start_offset']}-{marker['end_offset']}: {marker['tag_name']}"
+            if marker['properties']:
+                details += f" ({', '.join(f'{k}={v}' for k, v in marker['properties'].items())})"
+            details += "\n"
     else:
         details += "  None\n"
     
@@ -218,16 +221,8 @@ def show_sequence_details(sender, app_data, user_data):
             dpg.configure_item(f"assign_type_{type_data['name']}",
                             user_data=(seq['id'], type_data['name']), enabled=True)
         
-        # Clear existing fuzzable regions
-        hexdump_widget.fuzzable_regions.clear()
-        
-        # Add regions from sequence
-        for region in seq.get('fuzzable_regions', []):
-            hexdump_widget.add_fuzzable_region(
-                region['start_offset'],
-                region['end_offset'],
-                region['mutation_type']
-            )
+        # Set data with markers
+        hexdump_widget.set_data(data, seq['id'], seq.get('markers', []))
             
         # Restore the callback
         hexdump_widget.on_regions_changed = original_callback
@@ -354,20 +349,22 @@ def update_existing_sequences_types():
     
     # Save updated sequences
     save_sequences()
-
 def update_sequence_regions(sequence_id, regions):
-    """Update fuzzable regions for a sequence and save to file"""
+    """Update markers for a sequence and save to file"""
     for seq in sequences:
         if seq['id'] == sequence_id:
-            seq['fuzzable_regions'] = [
+            seq['markers'] = [
                 {
                     'start_offset': r.start_offset,
                     'end_offset': r.end_offset,
-                    'mutation_type': r.mutation_type
+                    'tag_name': r.tag_name,
+                    'tag_type': r.tag_type,
+                    'properties': r.properties
                 }
                 for r in regions
             ]
             save_sequences()
+            break
             break
 
 def remove_sequence(sender, app_data, user_data):
