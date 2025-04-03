@@ -157,9 +157,16 @@ def update_sequences_list():
     filtered_sequences = apply_filters(sequences)
     
     for seq in filtered_sequences:
-        packet_type = seq.get('packet_type', 'undefined')
-        label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
-        dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, parent="sequences_list", width=-1)
+        # Create group for each sequence with spacing
+        with dpg.group(horizontal=True, parent="sequences_list"):
+            # Details button
+            packet_type = seq.get('packet_type', 'undefined')
+            label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
+            dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, width=300)
+            
+            # Remove button with red tint
+            dpg.add_button(label="Delete", callback=remove_sequence, user_data=seq['id'], width=50)
+            dpg.bind_item_theme(dpg.last_item(), "delete_button_theme")
 
 def show_sequence_details(sender, app_data, user_data):
     """Show details of selected sequence"""
@@ -270,7 +277,8 @@ def delete_packet_type(sender, app_data, user_data):
         update_sequences_list()
 
 def update_packet_types_list():
-    """Update the packet types list in the UI"""
+    """Update the packet types list in the UI and packet type management buttons"""
+    # Update packet types list
     dpg.delete_item("packet_types_list", children_only=True)
     
     for type_data in packet_type_manager.types:
@@ -292,6 +300,19 @@ def update_packet_types_list():
             
         dpg.add_text(desc, parent="packet_types_list")
         dpg.add_separator(parent="packet_types_list")
+    
+    # Update packet type management buttons
+    if dpg.does_item_exist("type_management_buttons"):
+        dpg.delete_item("type_management_buttons")
+    
+    dpg.add_group(horizontal=True, tag="type_management_buttons", parent="sequence_details_group")
+    dpg.add_button(label="Remove Type", callback=remove_packet_type, tag="remove_type_button",
+                  enabled=False, parent="type_management_buttons")
+    dpg.add_text("Assign Type:", parent="type_management_buttons")
+    for type_data in packet_type_manager.types:
+        dpg.add_button(label=type_data['name'], callback=assign_packet_type,
+                    tag=f"assign_type_{type_data['name']}", enabled=False,
+                    parent="type_management_buttons")
 
 def assign_packet_type(sender, app_data, user_data):
     """Assign a packet type to the current sequence"""
@@ -343,12 +364,36 @@ def update_sequence_regions(sequence_id, regions):
             save_sequences()
             break
 
+def remove_sequence(sender, app_data, user_data):
+    """Remove a single sequence by its ID"""
+    global sequences
+    sequences = [seq for seq in sequences if seq['id'] != user_data]
+    save_sequences()
+    update_sequences_list()
+
+def clear_filtered_sequences(sender, app_data):
+    """Remove all sequences that match the current filters"""
+    global sequences
+    filtered = apply_filters(sequences)
+    filtered_ids = {seq['id'] for seq in filtered}
+    sequences = [seq for seq in sequences if seq['id'] not in filtered_ids]
+    save_sequences()
+    update_sequences_list()
+
 def clear_console(sender, app_data):
     """Clear the console output"""
     dpg.set_value("console", "")
 
 # Initialize DearPyGui
 dpg.create_context()
+
+# Create theme for delete button
+with dpg.theme(tag="delete_button_theme"):
+    with dpg.theme_component(dpg.mvButton):
+        dpg.add_theme_color(dpg.mvThemeCol_Button, (150, 20, 20))
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (200, 30, 30))
+        dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (250, 40, 40))
+
 dpg.create_viewport(title="Frida Network Interceptor", width=1600, height=800)
 dpg.setup_dearpygui()
 
@@ -368,7 +413,7 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
             # Main content area
             with dpg.group(horizontal=True):
                 # Left panel - Console and Sequences
-                with dpg.child_window(width=350, height=600):
+                with dpg.child_window(width=400, height=600):
                     dpg.add_text("Console Output")
                     with dpg.group(horizontal=True):
                         dpg.add_button(label="Clear Console", callback=clear_console)
@@ -410,23 +455,22 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                     dpg.add_button(label="Reset All Filters", callback=reset_all_filters)
                     
                     dpg.add_separator()
-                    dpg.add_text("Captured Sequences")
+                    # Add buttons for sequence management
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Captured Sequences")
+                        dpg.add_button(label="Clear Filtered", callback=clear_filtered_sequences)
                     dpg.add_child_window(tag="sequences_list", height=250)
 
                 # Middle panel - Sequence Details
                 with dpg.child_window(width=350, height=600):
-                    dpg.add_text("Sequence Details")
-                    dpg.add_input_text(multiline=True, width=-1, height=400, tag="sequence_details", readonly=True)
+                    dpg.add_group(tag="sequence_details_group")
+                    dpg.add_text("Sequence Details", parent="sequence_details_group")
+                    dpg.add_input_text(multiline=True, width=-1, height=400, tag="sequence_details", readonly=True, parent="sequence_details_group")
                     
                     # Add packet type management section
                     dpg.add_separator()
                     dpg.add_text("Packet Type Management")
-                    with dpg.group(horizontal=True):
-                        dpg.add_button(label="Remove Type", callback=remove_packet_type, tag="remove_type_button", enabled=False)
-                        dpg.add_text("Assign Type:")
-                        for type_data in packet_type_manager.types:
-                            dpg.add_button(label=type_data['name'], callback=assign_packet_type,
-                                        tag=f"assign_type_{type_data['name']}", enabled=False)
+                    dpg.add_group(horizontal=True, tag="type_management_buttons")
 
                 # Right panel - Hexdump Display
                 with dpg.child_window(width=800, height=600):
@@ -462,9 +506,12 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                 dpg.add_separator()
                 dpg.add_text("Existing Packet Types")
                 dpg.add_child_window(tag="packet_types_list", height=300)
-
 # Load existing sequences
 load_sequences()
+
+# Initialize packet type management buttons
+update_packet_types_list()
+
 
 # Start message processing thread
 message_thread = threading.Thread(target=process_messages, daemon=True)
