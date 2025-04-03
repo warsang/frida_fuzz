@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 import frida_handler
 from queue import Queue
 import json
+from packet_type_manager import PacketTypeManager, PacketTypeCriteria
 import threading
 import time
 from hexdump_widget import HexdumpWidget
@@ -12,6 +13,7 @@ sequences = []
 is_running = False
 target_process = ""
 current_sequence = None  # Store current sequence for filter operations
+packet_type_manager = PacketTypeManager()
 
 def save_sequences():
     """Save sequences to JSON file"""
@@ -35,6 +37,16 @@ def process_messages():
             if not message_queue.empty():
                 message = message_queue.get_nowait()
                 if message.get('type') == 'sequence':
+                    # Check if packet matches any type
+                    try:
+                        data = bytes.fromhex(message['hex_data'])
+                        callstack = "\n".join(message['backtrace'])
+                        packet_type = packet_type_manager.matches_type(data, message['buffer_length'], callstack)
+                        if packet_type:
+                            message['packet_type'] = packet_type
+                    except ValueError:
+                        print("Invalid hex data in message")
+                    
                     # Add ID if not present
                     if 'id' not in message:
                         message['id'] = len(sequences) + 1
@@ -57,7 +69,7 @@ def start_intercepting(sender, app_data):
     """Start Frida interception"""
     global is_running, target_process
     if not is_running:
-        target = dpg.get_value("target_input")
+        target = dpg.get_value("target_input").strip()
         if target:
             try:
                 target = int(target)
@@ -83,6 +95,7 @@ def stop_intercepting(sender, app_data):
         dpg.configure_item("start_button", enabled=True)
         dpg.configure_item("stop_button", enabled=False)
         dpg.configure_item("target_input", enabled=True)
+
 def set_callstack_filter(sender, app_data):
     """Set the callstack filter from the currently selected sequence"""
     global current_sequence
@@ -144,7 +157,8 @@ def update_sequences_list():
     filtered_sequences = apply_filters(sequences)
     
     for seq in filtered_sequences:
-        label = f"#{seq['id']} - {seq['function_name']} ({seq['buffer_length']} bytes)"
+        packet_type = seq.get('packet_type', 'undefined')
+        label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
         dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, parent="sequences_list", width=-1)
 
 def show_sequence_details(sender, app_data, user_data):
@@ -156,7 +170,8 @@ def show_sequence_details(sender, app_data, user_data):
         f"Socket ID: {seq['socket_id']}\n"
         f"Socket Info: {seq['socket_info']}\n"
         f"Buffer Length: {seq['buffer_length']}\n"
-        f"Flags: {seq['flags']}\n\n"
+        f"Flags: {seq['flags']}\n"
+        f"Packet Type: {seq.get('packet_type', 'undefined')}\n\n"
         f"Raw Hex Data:\n{seq['hex_data']}\n\n"
         f"Backtrace:\n" + "\n".join(seq['backtrace']) + "\n\n"
         f"Fuzzable Regions:\n"
@@ -184,6 +199,12 @@ def show_sequence_details(sender, app_data, user_data):
         # Set data and sequence ID
         hexdump_widget.set_data(data, seq['id'])
         
+        # Update packet type management buttons
+        dpg.configure_item("remove_type_button", user_data=seq['id'], enabled=True)
+        for type_data in packet_type_manager.types:
+            dpg.configure_item(f"assign_type_{type_data['name']}",
+                            user_data=(seq['id'], type_data['name']), enabled=True)
+        
         # Clear existing fuzzable regions
         hexdump_widget.fuzzable_regions.clear()
         
@@ -199,6 +220,87 @@ def show_sequence_details(sender, app_data, user_data):
         hexdump_widget.on_regions_changed = original_callback
     except ValueError:
         print("Invalid hex data")
+
+def create_packet_type(sender, app_data):
+    """Create a new packet type from form data"""
+    name = dpg.get_value("type_name_input").strip()
+    description = dpg.get_value("type_description_input").strip()
+    hex_value = dpg.get_value("type_hex_value_input").strip()
+    hex_offset = dpg.get_value("type_hex_offset_input")
+    packet_size = dpg.get_value("type_size_input")
+    callstack = dpg.get_value("type_callstack_input").strip()
+
+    if not name:
+        return
+
+    # Create criteria object
+    criteria = PacketTypeCriteria(
+        hex_value=hex_value if hex_value else None,
+        hex_offset=hex_offset if hex_offset != 0 else None,
+        packet_size=packet_size if packet_size != 0 else None,
+        callstack=callstack if callstack else None
+    )
+
+    # Create the type
+    if packet_type_manager.create_type(name, description, criteria):
+        # Clear form
+        dpg.set_value("type_name_input", "")
+        dpg.set_value("type_description_input", "")
+        dpg.set_value("type_hex_value_input", "")
+        dpg.set_value("type_hex_offset_input", 0)
+        dpg.set_value("type_size_input", 0)
+        dpg.set_value("type_callstack_input", "")
+        update_packet_types_list()
+
+def delete_packet_type(sender, app_data, user_data):
+    """Delete a packet type"""
+    type_name = user_data
+    if packet_type_manager.delete_type(type_name):
+        update_packet_types_list()
+
+def update_packet_types_list():
+    """Update the packet types list in the UI"""
+    dpg.delete_item("packet_types_list", children_only=True)
+    
+    for type_data in packet_type_manager.types:
+        with dpg.group(horizontal=True, parent="packet_types_list"):
+            dpg.add_text(type_data['name'])
+            dpg.add_button(label="Delete", callback=delete_packet_type, user_data=type_data['name'])
+            
+        desc = f"Description: {type_data['description']}\n"
+        criteria = type_data['criteria']
+        if criteria['hex_value']:
+            desc += f"Hex Value: {criteria['hex_value']}"
+            if criteria['hex_offset'] is not None:
+                desc += f" at offset {criteria['hex_offset']}"
+            desc += "\n"
+        if criteria['packet_size'] is not None:
+            desc += f"Packet Size: {criteria['packet_size']}\n"
+        if criteria['callstack']:
+            desc += f"Callstack: {criteria['callstack']}\n"
+            
+        dpg.add_text(desc, parent="packet_types_list")
+        dpg.add_separator(parent="packet_types_list")
+
+def assign_packet_type(sender, app_data, user_data):
+    """Assign a packet type to the current sequence"""
+    seq_id, type_name = user_data
+    for seq in sequences:
+        if seq['id'] == seq_id:
+            seq['packet_type'] = type_name
+            save_sequences()
+            show_sequence_details(None, None, seq)
+            break
+
+def remove_packet_type(sender, app_data, user_data):
+    """Remove packet type from the current sequence"""
+    seq_id = user_data
+    for seq in sequences:
+        if seq['id'] == seq_id:
+            seq['packet_type'] = None
+            save_sequences()
+            show_sequence_details(None, None, seq)
+            break
 
 def update_sequence_regions(sequence_id, regions):
     """Update fuzzable regions for a sequence and save to file"""
@@ -221,7 +323,7 @@ def clear_console(sender, app_data):
 
 # Initialize DearPyGui
 dpg.create_context()
-dpg.create_viewport(title="Frida Network Interceptor", width=1600, height=800)  # Increased viewport width
+dpg.create_viewport(title="Frida Network Interceptor", width=1600, height=800)
 dpg.setup_dearpygui()
 
 # Create the main window
@@ -233,69 +335,107 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
         dpg.add_button(label="Stop", callback=stop_intercepting, tag="stop_button", enabled=False)
         dpg.add_text("Stopped", tag="status")
 
-    # Main content area
-    with dpg.group(horizontal=True):
-        # Left panel - Console and Sequences
-        with dpg.child_window(width=350, height=600):  # Slightly reduced to give more space to hexdump
-            dpg.add_text("Console Output")
+    # Add tabs for different views
+    with dpg.tab_bar(tag="main_tab_bar"):
+        # Main view tab
+        with dpg.tab(label="Main View", tag="main_view_tab"):
+            # Main content area
             with dpg.group(horizontal=True):
-                dpg.add_button(label="Clear Console", callback=clear_console)
-            dpg.add_input_text(multiline=True, width=-1, height=250, tag="console", readonly=True)
-            
-            dpg.add_separator()
-            dpg.add_text("Filters")
-            
-            # Size filter
-            with dpg.group(horizontal=True):
-                dpg.add_text("Size:")
-                dpg.add_input_int(tag="size_filter", width=100, default_value=0, callback=update_sequences_list)
-            
-            # Host filter
-            with dpg.group(horizontal=True):
-                dpg.add_text("Host:")
-                dpg.add_input_text(tag="host_filter", width=100, callback=update_sequences_list)
-            
-            # Port filter
-            with dpg.group(horizontal=True):
-                dpg.add_text("Port:")
-                dpg.add_input_text(tag="port_filter", width=100, callback=update_sequences_list)
-            # Callstack filter
-            with dpg.group(horizontal=True):
-                dpg.add_text("Callstack from selected:")
-                dpg.add_button(label="Set from current", callback=set_callstack_filter)
-                dpg.add_button(label="Reset", callback=reset_callstack_filter)
-            dpg.add_input_text(tag="callstack_filter", width=-1, height=50, readonly=True)
-            
-            # Callstack word filter
-            with dpg.group(horizontal=True):
-                dpg.add_text("Callstack contains:")
-                dpg.add_input_text(tag="callstack_word_filter", width=100, callback=update_sequences_list)
-            
-            dpg.add_separator()
-            
-            # Reset all filters button
-            dpg.add_button(label="Reset All Filters", callback=reset_all_filters)
-            
-            dpg.add_separator()
-            dpg.add_text("Captured Sequences")
-            dpg.add_child_window(tag="sequences_list", height=250)
+                # Left panel - Console and Sequences
+                with dpg.child_window(width=350, height=600):
+                    dpg.add_text("Console Output")
+                    with dpg.group(horizontal=True):
+                        dpg.add_button(label="Clear Console", callback=clear_console)
+                    dpg.add_input_text(multiline=True, width=-1, height=250, tag="console", readonly=True)
+                    
+                    dpg.add_separator()
+                    dpg.add_text("Filters")
+                    
+                    # Size filter
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Size:")
+                        dpg.add_input_int(tag="size_filter", width=100, default_value=0, callback=update_sequences_list)
+                    
+                    # Host filter
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Host:")
+                        dpg.add_input_text(tag="host_filter", width=100, callback=update_sequences_list)
+                    
+                    # Port filter
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Port:")
+                        dpg.add_input_text(tag="port_filter", width=100, callback=update_sequences_list)
+                    
+                    # Callstack filter
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Callstack from selected:")
+                        dpg.add_button(label="Set from current", callback=set_callstack_filter)
+                        dpg.add_button(label="Reset", callback=reset_callstack_filter)
+                    dpg.add_input_text(tag="callstack_filter", width=-1, height=50, readonly=True)
+                    
+                    # Callstack word filter
+                    with dpg.group(horizontal=True):
+                        dpg.add_text("Callstack contains:")
+                        dpg.add_input_text(tag="callstack_word_filter", width=100, callback=update_sequences_list)
+                    
+                    dpg.add_separator()
+                    
+                    # Reset all filters button
+                    dpg.add_button(label="Reset All Filters", callback=reset_all_filters)
+                    
+                    dpg.add_separator()
+                    dpg.add_text("Captured Sequences")
+                    dpg.add_child_window(tag="sequences_list", height=250)
 
-        # Middle panel - Sequence Details
-        with dpg.child_window(width=350, height=600):  # Slightly reduced to give more space to hexdump
-            dpg.add_text("Sequence Details")
-            dpg.add_input_text(multiline=True, width=-1, height=-1, tag="sequence_details", readonly=True)
+                # Middle panel - Sequence Details
+                with dpg.child_window(width=350, height=600):
+                    dpg.add_text("Sequence Details")
+                    dpg.add_input_text(multiline=True, width=-1, height=400, tag="sequence_details", readonly=True)
+                    
+                    # Add packet type management section
+                    dpg.add_separator()
+                    dpg.add_text("Packet Type Management")
+                    with dpg.group(horizontal=True):
+                        dpg.add_button(label="Remove Type", callback=remove_packet_type, tag="remove_type_button", enabled=False)
+                        dpg.add_text("Assign Type:")
+                        for type_data in packet_type_manager.types:
+                            dpg.add_button(label=type_data['name'], callback=assign_packet_type,
+                                        tag=f"assign_type_{type_data['name']}", enabled=False)
 
-        # Right panel - Hexdump Display
-        with dpg.child_window(width=800, height=600):  # Doubled the width
-            dpg.add_text("Hexdump View")
-            # Create hexdump widget instance
-            global hexdump_widget
-            hexdump_widget = HexdumpWidget(
-                tag="hexdump_view",
-                width=780,  # Doubled the width (minus padding)
-                height=570,
-                on_regions_changed=update_sequence_regions
-            )
+                # Right panel - Hexdump Display
+                with dpg.child_window(width=800, height=600):
+                    dpg.add_text("Hexdump View")
+                    # Create hexdump widget instance
+                    global hexdump_widget
+                    hexdump_widget = HexdumpWidget(
+                        tag="hexdump_view",
+                        width=780,
+                        height=570,
+                        on_regions_changed=update_sequence_regions
+                    )
+                    # The hexdump widget handles its own context menu
+
+        # Packet Types tab
+        with dpg.tab(label="Packet Types", tag="packet_types_tab", parent="main_tab_bar"):
+            with dpg.child_window(width=-1, height=600):
+                # Form for creating new packet types
+                dpg.add_text("Create New Packet Type")
+                dpg.add_input_text(label="Name", tag="type_name_input", width=200)
+                dpg.add_input_text(label="Description", tag="type_description_input", width=400, height=50, multiline=True)
+                
+                dpg.add_separator()
+                dpg.add_text("Criteria (all optional)")
+                
+                dpg.add_input_text(label="Hex Value (e.g., FF00FF)", tag="type_hex_value_input", width=200)
+                dpg.add_input_int(label="at Offset (0 = anywhere)", tag="type_hex_offset_input", width=100)
+                dpg.add_input_int(label="Packet Size (bytes)", tag="type_size_input", width=100)
+                dpg.add_input_text(label="Callstack Contains", tag="type_callstack_input", width=400)
+                
+                dpg.add_button(label="Create Type", callback=create_packet_type)
+                
+                dpg.add_separator()
+                dpg.add_text("Existing Packet Types")
+                dpg.add_child_window(tag="packet_types_list", height=300)
 
 # Load existing sequences
 load_sequences()
