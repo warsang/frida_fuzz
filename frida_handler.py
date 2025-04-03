@@ -160,6 +160,7 @@ def start_frida(target_process, message_queue: Queue) -> tuple[bool, Queue]:
     }
 
     var sendFunctions = ['send', 'sendto'];
+    var recvFunctions = ['recv', 'recvfrom'];
 
     sendFunctions.forEach(function(funcName) {
         Interceptor.attach(Module.getExportByName(null, funcName), {
@@ -194,6 +195,52 @@ def start_frida(target_process, message_queue: Queue) -> tuple[bool, Queue]:
             onLeave: function(retval) {
                 // Optionally send return value info (can be filtered in Python)
                 send({ type: 'return', function_name: funcName, retval: retval.toInt32() });
+            }
+        });
+    });
+
+    // Hook receive functions
+    recvFunctions.forEach(function(funcName) {
+        Interceptor.attach(Module.getExportByName(null, funcName), {
+            onEnter: function(args) {
+                try {
+                    // Store arguments for use in onLeave
+                    this.socket = args[0].toInt32();
+                    this.buf = args[1];
+                    this.len = args[2].toInt32();
+                    this.flags = args[3].toInt32();
+                    this.socketInfo = getSocketInfo(this.socket);
+                    this.backtrace_raw = Thread.backtrace(this.context, Backtracer.ACCURATE);
+                } catch (e) {
+                    send({ type: 'error', source: 'onEnter', message: `Error in ${funcName}: ${e.message}` });
+                }
+            },
+            onLeave: function(retval) {
+                try {
+                    const bytesReceived = retval.toInt32();
+                    if (bytesReceived > 0) {
+                        // Only get data if we actually received something
+                        const hexData = getHexData(this.buf, bytesReceived);
+                        
+                        // Construct JSON payload
+                        const payload = {
+                            type: 'sequence',
+                            function_name: funcName,
+                            socket_id: this.socket,
+                            socket_info: this.socketInfo,
+                            buffer_length: bytesReceived,
+                            flags: this.flags,
+                            hex_data: hexData,
+                            backtrace: formatBacktrace(this.backtrace_raw),
+                            direction: 'receive' // Add direction to distinguish from send
+                        };
+                        send(payload);
+                    }
+                    // Send return value info
+                    send({ type: 'return', function_name: funcName, retval: bytesReceived });
+                } catch (e) {
+                    send({ type: 'error', source: 'onLeave', message: `Error in ${funcName}: ${e.message}` });
+                }
             }
         });
     });

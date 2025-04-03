@@ -122,6 +122,7 @@ def apply_filters(sequences_list):
     size_filter = dpg.get_value("size_filter")
     host_filter = dpg.get_value("host_filter").strip()
     port_filter = dpg.get_value("port_filter").strip()
+    hide_received = dpg.get_value("hide_received")
     callstack_filter = dpg.get_value("callstack_filter").strip()
     callstack_word = dpg.get_value("callstack_word_filter").strip()
 
@@ -146,6 +147,10 @@ def apply_filters(sequences_list):
     # Apply callstack word filter
     if callstack_word:
         filtered = [seq for seq in filtered if any(callstack_word.lower() in frame.lower() for frame in seq['backtrace'])]
+    
+    # Filter out received packets if hide_received is enabled
+    if hide_received:
+        filtered = [seq for seq in filtered if seq.get('direction') != 'receive']
     
     return filtered
 
@@ -174,6 +179,7 @@ def show_sequence_details(sender, app_data, user_data):
     # Update sequence details
     details = (
         f"Function: {seq['function_name']}\n"
+        f"Direction: {seq.get('direction', 'send')}\n"
         f"Socket ID: {seq['socket_id']}\n"
         f"Socket Info: {seq['socket_info']}\n"
         f"Buffer Length: {seq['buffer_length']}\n"
@@ -448,6 +454,10 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                     with dpg.group(horizontal=True):
                         dpg.add_text("Callstack contains:")
                         dpg.add_input_text(tag="callstack_word_filter", width=100, callback=update_sequences_list)
+                    
+                    # Hide received packets filter
+                    with dpg.group(horizontal=True):
+                        dpg.add_checkbox(label="Hide Received Packets", tag="hide_received", callback=update_sequences_list)
                     
                     dpg.add_separator()
                     
