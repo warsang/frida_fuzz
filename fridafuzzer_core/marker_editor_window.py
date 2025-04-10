@@ -54,8 +54,13 @@ class MarkerEditorWindow:
 
                 dpg.add_separator()
 
-            # Group: Related Marker Dropdown
+            # Group: Related Marker Section with Packet Type and Marker dropdowns
             with dpg.group():
+                # Packet Type Dropdown
+                dpg.add_text("Packet Type:")
+                self.packet_type_dropdown = dpg.add_combo(items=["None"], default_value="None", tag="packet_type_dropdown", callback=self._on_packet_type_change)
+
+                # Marker Dropdown (filtered by packet type)
                 dpg.add_text("Related Marker:")
                 self.related_marker_dropdown = dpg.add_combo(items=["None"], default_value="None", tag="marker_related_dropdown")
 
@@ -82,8 +87,16 @@ class MarkerEditorWindow:
         """
         self.current_marker = marker
 
+        # Debug print for marker name
+        print(f"[DEBUG] load_marker: Received marker.tag_name = '{getattr(marker, 'tag_name', None)}'")
+
         # Populate basic info
-        dpg.set_value(self.name_input, marker.tag_name)
+        marker_name = getattr(marker, 'tag_name', "")
+        if not marker_name:
+            print("[WARNING] load_marker: marker.tag_name is empty or None, setting placeholder 'Unnamed Marker'")
+            marker_name = "Unnamed Marker"
+        dpg.set_value(self.name_input, marker_name)
+
         try:
             color_tuple = tuple(int(marker.properties.get('color', '#FFFFFF').lstrip('#')[i:i+2], 16)/255.0 for i in (0, 2, 4))
             dpg.set_value(self.color_picker, (*color_tuple, 1.0))
@@ -122,23 +135,29 @@ class MarkerEditorWindow:
             dpg.disable_item(self.byte_sequence_input)
             dpg.disable_item(self.offset_from_offset_input)
 
-        # Populate related marker dropdown
-        dropdown_items = ["None"]
-        marker_id_map = {"None": None}
+        # Populate packet type dropdown
+        # Fetch packet type names from the PacketTypeManager's loaded types
+        packet_types = ["None"] + [ptype["name"] for ptype in self.parent_widget.packet_type_manager.types]
+        dpg.configure_item(self.packet_type_dropdown, items=packet_types)
+
+        # Determine related marker's packet type (default to parent's current packet type)
+        related_packet_type = "None"
+        related_marker_id = marker.related_marker_id
+
+        # Find the related marker in all_markers to get its packet type
         for m in all_markers:
-            if m.marker_id != marker.marker_id:
-                label = f"{m.tag_name} ({m.marker_id[:8]})"
-                dropdown_items.append(label)
-                marker_id_map[label] = m.marker_id
-        dpg.configure_item(self.related_marker_dropdown, items=dropdown_items)
-        # Set current related marker
-        selected_label = "None"
-        for label, mid in marker_id_map.items():
-            if mid == marker.related_marker_id:
-                selected_label = label
+            if m.marker_id == related_marker_id:
+                related_packet_type = m.packet_type if hasattr(m, 'packet_type') else self.parent_widget.current_packet_type
                 break
-        dpg.set_value(self.related_marker_dropdown, selected_label)
-        self._marker_id_map = marker_id_map
+
+        # Set packet type dropdown value
+        if related_packet_type in packet_types:
+            dpg.set_value(self.packet_type_dropdown, related_packet_type)
+        else:
+            dpg.set_value(self.packet_type_dropdown, "None")
+
+        # Populate marker dropdown based on selected packet type
+        self._update_marker_dropdown(related_packet_type, all_markers, exclude_marker_id=marker.marker_id, select_marker_id=related_marker_id)
 
     def _on_size_mode_change(self, sender, app_data, user_data):
         mode = dpg.get_value(self.size_mode_radio)
@@ -273,6 +292,50 @@ class MarkerEditorWindow:
         # Hide editor
         self.hide()
 
+    def _on_packet_type_change(self, sender, app_data, user_data):
+        """
+        Callback when packet type dropdown changes.
+        Updates the marker dropdown to show markers for the selected packet type.
+        """
+        selected_packet_type = dpg.get_value(self.packet_type_dropdown)
+
+        # Fetch all markers for the selected packet type
+        if selected_packet_type == "None":
+            markers = []
+        else:
+            markers = self.parent_widget.marker_manager.load_markers_for_type(selected_packet_type)
+
+        # Exclude the current marker itself
+        current_marker_id = self.current_marker.marker_id if self.current_marker else None
+        self._update_marker_dropdown(selected_packet_type, markers, exclude_marker_id=current_marker_id)
+
+    def _update_marker_dropdown(self, packet_type, markers, exclude_marker_id=None, select_marker_id=None):
+        """
+        Helper to update the marker dropdown based on packet type and markers list.
+        """
+        dropdown_items = ["None"]
+        marker_id_map = {"None": None}
+
+        for m in markers:
+            if exclude_marker_id and m.marker_id == exclude_marker_id:
+                continue
+            label = f"{m.tag_name} ({m.marker_id[:8]})"
+            dropdown_items.append(label)
+            marker_id_map[label] = m.marker_id
+
+        dpg.configure_item(self.related_marker_dropdown, items=dropdown_items)
+
+        # Select marker if specified
+        selected_label = "None"
+        if select_marker_id:
+            for label, mid in marker_id_map.items():
+                if mid == select_marker_id:
+                    selected_label = label
+                    break
+        dpg.set_value(self.related_marker_dropdown, selected_label)
+
+        # Save the map for _on_save
+        self._marker_id_map = marker_id_map
     def _create_basic_marker(self, offset):
         """
         Helper to create a minimal marker at a given offset.

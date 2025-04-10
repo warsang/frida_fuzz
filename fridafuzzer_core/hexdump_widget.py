@@ -971,6 +971,7 @@ class HexdumpWidget:
             print("No marker types loaded.")
             return
         marker_type = marker_types[0]  # For now, pick the first marker type
+        print(f"[DEBUG] _add_marker: marker_type.name = '{marker_type.name}', marker_type.display_name = '{marker_type.display_name}'")
         new_marker = MarkerRegion(
             start_offset=start,
             end_offset=end,
@@ -979,7 +980,7 @@ class HexdumpWidget:
         )
         # Ensure marker color is set
         new_marker.properties['color'] = '#FFFFFF'
-        print(f"[DEBUG] _add_marker (958): Set new marker color to {new_marker.properties['color']}")
+        print(f"[DEBUG] _add_marker: Created new marker with tag_name = '{new_marker.tag_name}'")
         # Load current markers for this packet type
         marker_list = self.marker_manager.load_markers_for_type(self.current_packet_type) or []
         # Append the new marker
@@ -1027,6 +1028,11 @@ class HexdumpWidget:
         marker = self._get_marker_at_offset(start_offset)
 
         if marker:
+            # Debug: print marker info to verify correct data is passed
+            print(f"Modifying marker: id={getattr(marker, 'marker_id', None)}, "
+                  f"tag_name={getattr(marker, 'tag_name', None)}, "
+                  f"start_offset={getattr(marker, 'start_offset', None)}, "
+                  f"end_offset={getattr(marker, 'end_offset', None)}")
             # Load the marker data into the editor before showing
             all_current_markers = self.current_type_markers
             self.marker_editor_window.load_marker(marker, all_current_markers)
@@ -1239,23 +1245,20 @@ class HexdumpWidget:
     
                 marker_color = None
                 is_fuzzable = False
-    
+
                 if self.show_markers:
                     marker = self._get_marker_at_offset(byte_offset)
                     if marker:
-                        # Initialize marker_color as None
-                        marker_color = None
-
-                        # 1. Try to get the specific color set on this marker instance
+                        # Try to get the specific color saved in marker properties
                         marker_color_str = marker.properties.get('color')
                         print(f"[DEBUG] Marker color string from properties: '{marker_color_str}'")
 
                         if marker_color_str:
                             parsed_color = self._parse_color(marker_color_str)
                             if parsed_color is not None:
-                                marker_color = parsed_color  # Use valid specific marker color
+                                marker_color = parsed_color  # Use saved marker color
 
-                        # 2. If no valid specific color, try marker type color
+                        # If no valid saved color, try marker type default color
                         if marker_color is None:
                             marker_type_obj = self.marker_manager.get_marker_type(marker.tag_type)
                             if marker_type_obj and marker_type_obj.color:
@@ -1263,10 +1266,12 @@ class HexdumpWidget:
                                 parsed_type_color = self._parse_color(marker_type_obj.color)
                                 if parsed_type_color is not None:
                                     marker_color = parsed_type_color
+                                    print(f"[DEBUG] Using marker type color: {marker_color}")
 
-                        # 3. If still no valid color, fallback to default grey
+                        # If still no valid color, fallback to grey
                         if marker_color is None:
                             marker_color = self._parse_color("#808080")
+                            print(f"[DEBUG] Using fallback grey color: {marker_color}")
                 else:
                     field_info = self._get_ksy_field_at_offset(byte_offset)
                     if field_info:

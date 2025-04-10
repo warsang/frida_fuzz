@@ -5,7 +5,9 @@
       "end_offset": 5,
       "tag_name": "Size Field",
       "tag_type": "size_field",
-      "properties": {},
+      "properties": {
+        "color": "#FFFFFF"
+      },
       "marker_id": "",
       "size_definition_mode": "direct",
       "size_read_offset": null,
@@ -51,7 +53,9 @@
       "end_offset": 8,
       "tag_name": "Size Field",
       "tag_type": "size_field",
-      "properties": {},
+      "properties": {
+        "color": "#FFFFFF"
+      },
       "marker_id": "",
       "size_definition_mode": "direct",
       "size_read_offset": null,
@@ -107,25 +111,25 @@
       "offset_read_offset": null,
       "offset_byte_sequence": null,
       "related_marker_id": null
-    }
-  ],
-  "size_20": [
+    },
     {
-      "start_offset": 4,
-      "end_offset": 8,
-      "tag_name": "Size Field",
+      "start_offset": 1,
+      "end_offset": 5,
+      "tag_name": "toto",
       "tag_type": "size_field",
       "properties": {
-        "color": "#FFFFFF"
+        "color": "#ff0000"
       },
-      "marker_id": "",
+      "marker_id": "b85f7481-20d2-436b-b88b-b767b3c92651",
       "size_definition_mode": "direct",
       "size_read_offset": null,
       "offset_definition_mode": "direct",
       "offset_read_offset": null,
       "offset_byte_sequence": null,
       "related_marker_id": null
-    },
+    }
+  ],
+  "size_20": [
     {
       "start_offset": 1,
       "end_offset": 2,
@@ -182,71 +186,7 @@
       "properties": {
         "color": "#ff0000"
       },
-      "marker_id": "64cce3f8-1b99-42e8-9bd6-49d27d3fa3ad",
-      "size_definition_mode": "direct",
-      "size_read_offset": null,
-      "offset_definition_mode": "direct",
-      "offset_read_offset": null,
-      "offset_byte_sequence": null,
-      "related_marker_id": null
-    },
-    {
-      "start_offset": 4,
-      "end_offset": 8,
-      "tag_name": "Size Field",
-      "tag_type": "size_field",
-      "properties": {
-        "color": "#ff0000"
-      },
-      "marker_id": "d395ce67-bbfb-46dd-b9cd-a2fe5dfdbe7c",
-      "size_definition_mode": "direct",
-      "size_read_offset": null,
-      "offset_definition_mode": "direct",
-      "offset_read_offset": null,
-      "offset_byte_sequence": null,
-      "related_marker_id": null
-    },
-    {
-      "start_offset": 4,
-      "end_offset": 8,
-      "tag_name": "Size Field",
-      "tag_type": "size_field",
-      "properties": {
-        "color": "#ff0000"
-      },
-      "marker_id": "8898a142-94b0-400d-952e-376dbc577c55",
-      "size_definition_mode": "direct",
-      "size_read_offset": null,
-      "offset_definition_mode": "direct",
-      "offset_read_offset": null,
-      "offset_byte_sequence": null,
-      "related_marker_id": null
-    },
-    {
-      "start_offset": 4,
-      "end_offset": 8,
-      "tag_name": "Size Field",
-      "tag_type": "size_field",
-      "properties": {
-        "color": "#ff0000"
-      },
-      "marker_id": "0af5e116-29ca-415b-9c6b-400042d05c10",
-      "size_definition_mode": "direct",
-      "size_read_offset": null,
-      "offset_definition_mode": "direct",
-      "offset_read_offset": null,
-      "offset_byte_sequence": null,
-      "related_marker_id": null
-    },
-    {
-      "start_offset": 4,
-      "end_offset": 8,
-      "tag_name": "Size Field",
-      "tag_type": "size_field",
-      "properties": {
-        "color": "#ff0000"
-      },
-      "marker_id": "fa625311-3066-4abf-af76-dc8f097d0d72",
+      "marker_id": "9caf91b0-bee9-4cfe-a7e1-84f5ab4e7613",
       "size_definition_mode": "direct",
       "size_read_offset": null,
       "offset_definition_mode": "direct",
