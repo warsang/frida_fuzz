@@ -1,0 +1,77 @@
+{
+  "types": [
+    {
+      "name": "size_154_protobuf",
+      "description": "some heartbeat",
+      "criteria": {
+        "hex_value": null,
+        "hex_offset": null,
+        "packet_size": 154,
+        "callstack": null
+      }
+    },
+    {
+      "name": "size_10_and_protobuf",
+      "description": "size_10_and_protobuf",
+      "criteria": {
+        "hex_value": null,
+        "hex_offset": null,
+        "packet_size": 10,
+        "callstack": "protobuf"
+      }
+    },
+    {
+      "name": "size_18_protobuf",
+      "description": "size_18_protobuf",
+      "criteria": {
+        "hex_value": null,
+        "hex_offset": null,
+        "packet_size": 18,
+        "callstack": "protobuf"
+      }
+    },
+    {
+      "name": "size_252",
+      "description": "",
+      "criteria": {
+        "hex_value": null,
+        "hex_offset": null,
+        "packet_size": 252,
+        "callstack": null
+      }
+    },
+    {
+      "name": "1_byt",
+      "description": "",
+      "criteria": {
+        "hex_value": null,
+        "hex_offset": null,
+        "packet_size": 1,
+        "callstack": null
+      },
+      "ksy_file": "ksy_definitions\\1_byt_packet.ksy"
+    },
+    {
+      "name": "size_20",
+      "description": "size 20",
+      "criteria": {
+        "hex_value": null,
+        "hex_offset": null,
+        "packet_size": 20,
+        "callstack": null
+      },
+      "ksy_file": "ksy_definitions\\size_20_packet.ksy"
+    },
+    {
+      "name": "siezproto8",
+      "description": "",
+      "criteria": {
+        "hex_value": null,
+        "hex_offset": null,
+        "packet_size": 8,
+        "callstack": null
+      },
+      "ksy_file": "ksy_definitions\\siezproto8_packet.ksy"
+    }
+  ]
+}

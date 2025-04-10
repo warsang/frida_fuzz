@@ -1,117 +1,218 @@
-# Frida Network Interceptor UI - Plan
+# Kaitai Struct Integration Plan
 
-This document outlines the plan for creating a Streamlit UI for intercepting network traffic using Frida, saving sequences, and providing a diffing feature.
+## Overview
+This plan outlines the integration of Kaitai Struct-based packet parsing into the fuzzer tool. The goal is to enhance packet structure definition and analysis by leveraging Kaitai Struct's powerful parsing capabilities while maintaining compatibility with existing marker functionality.
 
-**Core Requirements:**
-
-*   Intercept `send`/`sendto` calls using Frida.
-*   Display captured data (hexdumps, socket info) in a Streamlit UI.
-*   Store captured data as numbered sequences.
-*   Allow users to configure the target process name or PID.
-*   Persist captured sequences to a file (`sequences.json`).
-*   Provide a side-by-side diff view for comparing two selected sequences.
-
-**Phased Implementation:**
-
-**Phase 1: Refactoring and Basic Structure**
-
-1.  **Separate Concerns:**
-    *   Modify Frida JS to send structured JSON (function name, socket info, raw hex string) to Python.
-    *   Create `app.py` for Streamlit UI.
-    *   Create `frida_handler.py` for Frida interaction logic.
-2.  **Create Streamlit App (`app.py`):**
-    *   Import `streamlit`, `frida`, `json`, `difflib`, `pathlib`, `queue`.
-    *   Define `SAVE_FILE = pathlib.Path("sequences.json")`.
-    *   Use `st.session_state` for: `sequences`, `frida_session`, `frida_script`, `is_running`, `target_process`, `message_queue`.
-3.  **Basic UI Layout (`app.py`):**
-    *   Title: "Frida Network Interceptor".
-    *   Input: `st.text_input("Target Process Name or PID:", key="target_process_input")`.
-    *   Buttons: Start/Stop in columns.
-    *   Status indicator.
-
-**Phase 2: Frida Integration & Persistence**
-
-1.  **Loading Sequences (`app.py`):**
-    *   `load_sequences()` function called on startup. Reads `SAVE_FILE` if exists, populates `st.session_state.sequences`, handles errors. Initializes empty list otherwise.
-2.  **Frida Control Logic (`app.py` calling `frida_handler.py`):**
-    *   "Start" button -> `start_frida(target, message_queue)`: Attaches Frida, loads script, sets up `on_message` to use queue, stores session/script in state, updates `is_running`.
-    *   "Stop" button -> `stop_frida()`: Detaches session, updates `is_running`.
-3.  **Message Handling & Saving (`frida_handler.py` and `app.py`):**
-    *   Python `on_message(message, data)` (in `frida_handler`): Parses JSON, adds timestamp/ID, puts dict into `st.session_state.message_queue`.
-    *   Main loop (`app.py`): Checks queue periodically. If items exist, get them, append to `st.session_state.sequences`, call `save_sequences()`.
-    *   `save_sequences()` (`app.py`): Writes `st.session_state.sequences` to `SAVE_FILE` as JSON.
-    *   Use `st.experimental_rerun()` after processing queue items.
-
-**Phase 3: Displaying Captured Sequences (`app.py`)**
-
-1.  **Sequence List:**
-    *   Iterate `st.session_state.sequences`.
-    *   Use `st.expander` for each sequence (e.g., `f"Sequence {seq['id']}: {seq['function']} ({len(seq['hex_data']) // 2} bytes)"`).
-    *   Inside: Display Timestamp, Socket Info, Full Hexdump (`st.code(seq['hex_data'])`).
-
-**Phase 4: Implementing Diffing (`app.py`)**
-
-1.  **Sequence Selection:**
-    *   Two `st.selectbox` widgets in columns for "Sequence A" and "Sequence B", populated from `st.session_state.sequences`.
-2.  **Diff Logic:**
-    *   Retrieve `hex_data` for selected sequences.
-    *   Use `difflib.ndiff` or similar.
-    *   Helper function to format `ndiff` output into two strings for side-by-side view.
-3.  **Display Diff:**
-    *   Use `st.columns(2)`.
-    *   Left column: Sequence A diff view (`st.code` or `st.text_area`).
-    *   Right column: Sequence B diff view (`st.code` or `st.text_area`).
-
-**Mermaid Diagram:**
+## System Architecture
 
 ```mermaid
 graph TD
-    subgraph Streamlit UI (app.py)
-        A[User Input: Target Process] --> B{Start Button};
-        B -- Click --> C[Call start_frida];
-        F{Stop Button} -- Click --> G[Call stop_frida];
+    A[Packet Type Creation] --> B[Generate Minimal KSY]
+    B --> C[Parse with Kaitai]
+    C --> D[Display in Hexdump]
+    D --> E[User Edits Structure]
+    E --> F[Update KSY File]
+    F --> G[Regenerate Parser]
+    G --> H[Update Display]
 
-        P[load_sequences() on Startup] --> W[st.session_state.sequences];
-        Y[Main Loop: Check Queue] --> Y1[Get from Queue];
-        Y1 -- Updates --> W;
-        Y1 --> Q[Call save_sequences()];
-        Y1 --> J[st.experimental_rerun];
-
-
-        I[Sequence Display Area] <-- J;
-        K[Diff Selection] --> L[Select Seq A & B];
-        L --> M[Retrieve Hexdumps from W];
-        M --> N[Format Diff (Side-by-Side)];
-        N --> O[Display Diff Result in Columns] --> J;
-
+    subgraph "KSY Generation"
+        B1[Create Basic Structure] --> B2[Add Meta Section]
+        B2 --> B3[Add Seq Section]
+        B3 --> B4[Save KSY File]
     end
 
-    subgraph Frida Handling (frida_handler.py)
-        C --> D[Attach Frida];
-        D --> E[Load JS Script w/ on_message];
-        E --> R(Target Process);
-        G --> H[Detach Frida];
-
-        V[Python on_message Callback] -- Puts --> X[st.session_state.message_queue];
+    subgraph "GUI Integration"
+        D1[Show Kaitai Fields] --> D2[Enable Field Editing]
+        D2 --> D3[Mark Fields Fuzzable]
+        D3 --> D4[Live Preview Changes]
     end
 
-    subgraph Frida JS
-        R -- Intercepts --> S[send/sendto];
-        S -- Data --> T(JS Script);
-        T -- Formats Data (JSON) --> U[JS send()];
-        U -- Message --> V;
-    end
-
-    subgraph Data Flow & State
-        X <-- V;
-        Y1 --> X;
-        W <--> Z[sequences.json File];
-        P --> Z;
-        Q --> Z;
+    subgraph "Marker System"
+        M1[Basic Offset Markers] --> M2[Kaitai Field Markers]
+        M2 --> M3[Combined View]
+        M3 --> M4[Export Definitions]
     end
 ```
 
-**Future Considerations:**
+## Components
 
-*   Fuzzy diffing.
-*   Ability to define relationships between hex blocks within the diff view.
+### 1. KSY File Management
+
+The KsyManager class will handle all operations related to .ksy files:
+
+```python
+class KsyManager:
+    def __init__(self):
+        self.ksy_dir = "ksy_definitions/"  # Directory for .ksy files
+        self.compiler = KaitaiStructCompiler()
+        
+    def create_minimal_ksy(self, packet_type: str, initial_data: bytes) -> str:
+        """Create minimal KSY file for a new packet type"""
+        ksy_content = {
+            "meta": {
+                "id": f"{packet_type}_packet",
+                "title": f"{packet_type} Packet Structure",
+                "fuzzable_fields": []  # List of field paths that are fuzzable
+            },
+            "seq": [
+                {
+                    "id": "header",
+                    "type": "u4",
+                    "doc": "Packet header"
+                },
+                {
+                    "id": "payload",
+                    "size-eos": True,
+                    "doc": "Packet payload"
+                }
+            ]
+        }
+        return ksy_content
+
+    def compile_ksy(self, ksy_path: str) -> None:
+        """Compile KSY to Python class"""
+        pass
+
+    def update_ksy(self, ksy_path: str, updates: dict) -> None:
+        """Update existing KSY file with new definitions"""
+        pass
+```
+
+### 2. PacketTypeManager Integration
+
+Extended PacketTypeManager to support Kaitai Struct integration:
+
+```python
+class PacketTypeManager:
+    def create_type(self, name: str, description: str, criteria: PacketTypeCriteria) -> bool:
+        """Extended to generate KSY file"""
+        if super().create_type(name, description, criteria):
+            # Create minimal KSY file
+            ksy_manager = KsyManager()
+            ksy_content = ksy_manager.create_minimal_ksy(name, sample_data)
+            ksy_path = f"ksy_definitions/{name}_packet.ksy"
+            
+            with open(ksy_path, "w") as f:
+                yaml.dump(ksy_content, f)
+                
+            # Compile KSY to Python
+            ksy_manager.compile_ksy(ksy_path)
+            return True
+        return False
+```
+
+### 3. Enhanced MarkerManager
+
+MarkerManager updates to support Kaitai-based markers:
+
+```python
+class MarkerManager:
+    def add_kaitai_marker(self, packet_type: str, field_path: str, is_fuzzable: bool = False) -> None:
+        """Add a Kaitai-based marker"""
+        ksy_path = f"ksy_definitions/{packet_type}_packet.ksy"
+        
+        with open(ksy_path) as f:
+            ksy_data = yaml.safe_load(f)
+            
+        if is_fuzzable:
+            if "fuzzable_fields" not in ksy_data["meta"]:
+                ksy_data["meta"]["fuzzable_fields"] = []
+            ksy_data["meta"]["fuzzable_fields"].append(field_path)
+            
+        with open(ksy_path, "w") as f:
+            yaml.dump(ksy_data, f)
+```
+
+### 4. GUI Updates
+
+HexdumpWidget enhancements for Kaitai integration:
+
+```python
+class HexdumpWidget:
+    def __init__(self):
+        self.kaitai_overlay = KaitaiOverlay()
+        # ... existing init code ...
+
+    def show_kaitai_fields(self):
+        """Display Kaitai-parsed fields as overlay"""
+        if self.current_packet_type:
+            parser = self.get_kaitai_parser(self.current_packet_type)
+            parsed = parser.from_bytes(self.data)
+            self.kaitai_overlay.update(parsed)
+            
+    def on_field_right_click(self, field_path: str):
+        """Handle right-click on Kaitai field"""
+        menu = [
+            "Mark as Fuzzable",
+            "Edit Field Definition",
+            "Remove Field",
+            "Add New Field"
+        ]
+        # Show context menu
+```
+
+### 5. KaitaiOverlay Class
+
+New class for visualizing Kaitai-parsed fields:
+
+```python
+class KaitaiOverlay:
+    """Manages visual overlay of Kaitai-parsed fields"""
+    def __init__(self):
+        self.fields = []  # List of (start, end, field_path, properties)
+        
+    def update(self, parsed_data):
+        """Update overlay with newly parsed data"""
+        self.fields = self._extract_fields(parsed_data)
+        
+    def render(self, canvas):
+        """Render field overlays on hexdump"""
+        for start, end, path, props in self.fields:
+            self._draw_field(canvas, start, end, path, props)
+```
+
+## Implementation Steps
+
+1. Set up Kaitai Struct environment
+   - Install kaitai-struct-compiler
+   - Add Python runtime dependencies
+   - Create ksy_definitions directory
+
+2. Implement KsyManager
+   - Basic KSY file generation
+   - Compilation to Python classes
+   - KSY file updating mechanism
+
+3. Update PacketTypeManager
+   - Integrate KSY generation on new packet type creation
+   - Link packet types to KSY definitions
+
+4. Enhance MarkerManager
+   - Add Kaitai-based marker support
+   - Implement fuzzable field tracking
+   - Maintain backward compatibility
+
+5. Update GUI
+   - Add Kaitai field visualization
+   - Implement field editing interface
+   - Add context menus for field operations
+
+6. Testing
+   - Unit tests for KSY generation
+   - Integration tests for parser generation
+   - GUI testing for field visualization
+   - Fuzzing tests with new markers
+
+## Dependencies
+
+- kaitai-struct-compiler
+- kaitai-struct-python-runtime
+- PyYAML
+- DearPyGui (existing)
+
+## Notes
+
+- Maintain backward compatibility with existing marker system
+- Consider performance implications of live parsing
+- Plan for error handling in parser generation
+- Document KSY file format for users

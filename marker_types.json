@@ -1,0 +1,74 @@
+{
+  "marker_types": [
+    {
+      "name": "size_field",
+      "display_name": "Size Field",
+      "color": "#4A90E2",
+      "is_builtin": true,
+      "default_properties": {}
+    },
+    {
+      "name": "checksum",
+      "display_name": "Checksum",
+      "color": "#E24A90",
+      "is_builtin": true,
+      "default_properties": {}
+    },
+    {
+      "name": "data_field",
+      "display_name": "Data Field",
+      "color": "#50E24A",
+      "is_builtin": true,
+      "default_properties": {}
+    },
+    {
+      "name": "magic_constant",
+      "display_name": "Magic Constant",
+      "color": "#E2E24A",
+      "is_builtin": true,
+      "default_properties": {}
+    },
+    {
+      "name": "delimiter",
+      "display_name": "Delimiter",
+      "color": "#9B4AE2",
+      "is_builtin": true,
+      "default_properties": {}
+    },
+    {
+      "name": "aaa",
+      "display_name": "aaa",
+      "color": "#fb0505",
+      "is_builtin": false,
+      "default_properties": {}
+    },
+    {
+      "name": "bbb",
+      "display_name": "bbb",
+      "color": "#f9e807",
+      "is_builtin": false,
+      "default_properties": {}
+    },
+    {
+      "name": "ccc",
+      "display_name": "ccc",
+      "color": "#0014fb",
+      "is_builtin": false,
+      "default_properties": {}
+    },
+    {
+      "name": "ddd",
+      "display_name": "ddd",
+      "color": "#00f862",
+      "is_builtin": false,
+      "default_properties": {}
+    },
+    {
+      "name": "ggg",
+      "display_name": "ggg",
+      "color": "#ff00b6",
+      "is_builtin": false,
+      "default_properties": {}
+    }
+  ]
+}

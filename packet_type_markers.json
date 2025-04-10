@@ -1,0 +1,258 @@
+{
+  "siezproto8": [
+    {
+      "start_offset": 1,
+      "end_offset": 5,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {},
+      "marker_id": "",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 1,
+      "end_offset": 5,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#fe010000"
+      },
+      "marker_id": "ff8f514f-49c2-4067-894f-cd97faa98818",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 1,
+      "end_offset": 5,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#fc8f12a712a7"
+      },
+      "marker_id": "3c714630-9db9-4e7a-a8df-362a4919513f",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 7,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {},
+      "marker_id": "",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 7,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#3060fe0100"
+      },
+      "marker_id": "9ffbe18e-3912-4950-acba-a8233824c893",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 1,
+      "end_offset": 5,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ef922b82b8"
+      },
+      "marker_id": "d2a30795-3e1a-4db4-accb-ce434a94bda9",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 1,
+      "end_offset": 5,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ff0000"
+      },
+      "marker_id": "305eda91-8cf6-4df5-b703-539bed189ec9",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    }
+  ],
+  "size_20": [
+    {
+      "start_offset": 4,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#FFFFFF"
+      },
+      "marker_id": "",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 1,
+      "end_offset": 2,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#FFFFFF"
+      },
+      "marker_id": "",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 9,
+      "end_offset": 10,
+      "tag_name": "AutoMarker_9",
+      "tag_type": "auto",
+      "properties": {
+        "color": "#CCCCCC"
+      },
+      "marker_id": "4077ed9b-c0fa-4285-bf72-951131269de5",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 1,
+      "end_offset": 2,
+      "tag_name": "test_offset",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ff0000"
+      },
+      "marker_id": "60c5f4f4-7e02-4141-958f-3dbea768b53d",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "read_offset",
+      "offset_read_offset": 9,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 4,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ff0000"
+      },
+      "marker_id": "64cce3f8-1b99-42e8-9bd6-49d27d3fa3ad",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 4,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ff0000"
+      },
+      "marker_id": "d395ce67-bbfb-46dd-b9cd-a2fe5dfdbe7c",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 4,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ff0000"
+      },
+      "marker_id": "8898a142-94b0-400d-952e-376dbc577c55",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 4,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ff0000"
+      },
+      "marker_id": "0af5e116-29ca-415b-9c6b-400042d05c10",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    },
+    {
+      "start_offset": 4,
+      "end_offset": 8,
+      "tag_name": "Size Field",
+      "tag_type": "size_field",
+      "properties": {
+        "color": "#ff0000"
+      },
+      "marker_id": "fa625311-3066-4abf-af76-dc8f097d0d72",
+      "size_definition_mode": "direct",
+      "size_read_offset": null,
+      "offset_definition_mode": "direct",
+      "offset_read_offset": null,
+      "offset_byte_sequence": null,
+      "related_marker_id": null
+    }
+  ]
+}

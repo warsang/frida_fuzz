@@ -1,3 +1,6 @@
 venv/*
-__pycache_/*
+__pycache__/*
 sequences.json
+.cline*
+.roo*
+*.pyc

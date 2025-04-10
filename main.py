@@ -2,12 +2,25 @@ import frida
 import sys
 
 def on_message(message, data):
+    """
+    Callback function to handle messages received from the Frida script.
+
+    Args:
+        message: Dictionary containing the message from Frida.
+        data: Optional binary data sent with the message.
+    """
     if message['type'] == 'send':
         print(message['payload'])
     elif message['type'] == 'error':
         print(f"Error: {message['stack']}")
 
 def main():
+    """
+    Entry point for running the standalone Frida script.
+
+    Attaches to the target process, injects the Frida JavaScript code,
+    and sets up message handling.
+    """
     device = frida.get_local_device()
     pid = device.get_process("TL-Win64-Test.exe").pid
 

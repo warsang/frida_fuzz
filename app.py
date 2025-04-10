@@ -1,11 +1,11 @@
 import dearpygui.dearpygui as dpg
-import frida_handler
+from fridafuzzer_core import frida_handler
 from queue import Queue
 import json
-from packet_type_manager import PacketTypeManager, PacketTypeCriteria
+from fridafuzzer_core.packet_type_manager import PacketTypeManager, PacketTypeCriteria
 import threading
 import time
-from hexdump_widget import HexdumpWidget
+from fridafuzzer_core.hexdump_widget import HexdumpWidget
 
 # Global state
 message_queue = Queue()
@@ -484,7 +484,7 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                     dpg.add_text("Hexdump View")
                     # Create hexdump widget instance
                     global hexdump_widget
-                    hexdump_widget = HexdumpWidget(
+                    hexdump_widget = HexdumpWidget(packet_type_manager=packet_type_manager,
                         tag="hexdump_view",
                         width=780,
                         height=570,

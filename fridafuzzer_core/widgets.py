@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 from dataclasses import dataclass
 from typing import Optional, List, Tuple, Dict, Any
-from marker_manager import MarkerManager, MarkerRegion
+from .marker_manager import MarkerManager, MarkerRegion
 
 @dataclass
 class Selection:
