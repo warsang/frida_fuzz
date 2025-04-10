@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 import uuid
 
 class MarkerEditorWindow:
-    def __init__(self, parent_widget, save_callback=None):
+    def __init__(self, parent_widget, save_callback=None, tag="marker_editor_window", tag_suffix=""):
         """
         Initialize the Marker Editor window.
 
@@ -12,45 +12,60 @@ class MarkerEditorWindow:
         """
         self.parent_widget = parent_widget
         self.save_callback = save_callback
+
+        # Generate unique tags for all internal widgets by prefixing with parent_widget.tag
+        prefix = f"{self.parent_widget.tag}_"
+
+        self.name_input_tag = prefix + "marker_name_input"
+        self.color_picker_tag = prefix + "marker_color_picker"
+        self.size_input_tag = prefix + "marker_size_input"
+        self.size_offset_input_tag = prefix + "marker_size_offset_input"
+        self.size_mode_radio_tag = prefix + "marker_size_mode_radio"
+        self.start_offset_input_tag = prefix + "marker_start_offset_input"
+        self.byte_sequence_input_tag = prefix + "marker_byte_sequence_input"
+        self.offset_from_offset_input_tag = prefix + "marker_offset_from_offset_input"
+        self.offset_mode_radio_tag = prefix + "marker_offset_mode_radio"
+        self.packet_type_dropdown_tag = prefix + "packet_type_dropdown"
+        self.related_marker_dropdown_tag = prefix + "marker_related_dropdown"
         self.current_marker = None
 
-        with dpg.window(label="Marker Editor", show=False, width=400, height=600, tag="marker_editor_window") as self.window_id:
+        with dpg.window(label="Marker Editor", show=False, width=400, height=600, tag=tag) as self.window_id:
             # Group: Marker Basic Info
             with dpg.group():
                 dpg.add_text("Marker Name:")
-                self.name_input = dpg.add_input_text(tag="marker_name_input")
+                self.name_input = dpg.add_input_text(tag=self.name_input_tag)
 
                 dpg.add_separator()
 
                 dpg.add_text("Marker Color:")
-                self.color_picker = dpg.add_color_picker(no_alpha=False, tag="marker_color_picker", width=200)
+                self.color_picker = dpg.add_color_picker(no_alpha=False, tag=self.color_picker_tag, width=200)
 
                 dpg.add_separator()
 
             # Group: Marker Size
             with dpg.group():
                 dpg.add_text("Marker Size:")
-                self.size_input = dpg.add_input_text(tag="marker_size_input")
+                self.size_input = dpg.add_input_text(tag=self.size_input_tag)
 
                 dpg.add_text("Read Size From Offset:")
-                self.size_offset_input = dpg.add_input_text(tag="marker_size_offset_input")
+                self.size_offset_input = dpg.add_input_text(tag=self.size_offset_input_tag)
 
-                self.size_mode_radio = dpg.add_radio_button(items=["Direct Size", "Read from Offset"], default_value="Direct Size", horizontal=True, tag="marker_size_mode_radio", callback=self._on_size_mode_change)
+                self.size_mode_radio = dpg.add_radio_button(items=["Direct Size", "Read from Offset"], default_value="Direct Size", horizontal=True, tag=self.size_mode_radio_tag, callback=self._on_size_mode_change)
 
                 dpg.add_separator()
 
             # Group: Offset Finding Methods
             with dpg.group():
                 dpg.add_text("Start Offset:")
-                self.start_offset_input = dpg.add_input_text(tag="marker_start_offset_input")
+                self.start_offset_input = dpg.add_input_text(tag=self.start_offset_input_tag)
 
                 dpg.add_text("Find Offset by Byte Sequence:")
-                self.byte_sequence_input = dpg.add_input_text(tag="marker_byte_sequence_input")
+                self.byte_sequence_input = dpg.add_input_text(tag=self.byte_sequence_input_tag)
 
                 dpg.add_text("Read Offset From Offset:")
-                self.offset_from_offset_input = dpg.add_input_text(tag="marker_offset_from_offset_input")
+                self.offset_from_offset_input = dpg.add_input_text(tag=self.offset_from_offset_input_tag)
 
-                self.offset_mode_radio = dpg.add_radio_button(items=["Direct Offset", "Find by Byte Sequence", "Read from Offset"], default_value="Direct Offset", horizontal=True, tag="marker_offset_mode_radio", callback=self._on_offset_mode_change)
+                self.offset_mode_radio = dpg.add_radio_button(items=["Direct Offset", "Find by Byte Sequence", "Read from Offset"], default_value="Direct Offset", horizontal=True, tag=self.offset_mode_radio_tag, callback=self._on_offset_mode_change)
 
                 dpg.add_separator()
 
@@ -58,11 +73,11 @@ class MarkerEditorWindow:
             with dpg.group():
                 # Packet Type Dropdown
                 dpg.add_text("Packet Type:")
-                self.packet_type_dropdown = dpg.add_combo(items=["None"], default_value="None", tag="packet_type_dropdown", callback=self._on_packet_type_change)
+                self.packet_type_dropdown = dpg.add_combo(items=["None"], default_value="None", tag=self.packet_type_dropdown_tag, callback=self._on_packet_type_change)
 
                 # Marker Dropdown (filtered by packet type)
                 dpg.add_text("Related Marker:")
-                self.related_marker_dropdown = dpg.add_combo(items=["None"], default_value="None", tag="marker_related_dropdown")
+                self.related_marker_dropdown = dpg.add_combo(items=["None"], default_value="None", tag=self.related_marker_dropdown_tag)
 
                 dpg.add_separator()
 

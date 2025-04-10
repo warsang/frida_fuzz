@@ -43,7 +43,11 @@ class HexdumpWidget:
     def __init__(self, tag: str, width: int = 1200, height: int = 1600,
                  on_regions_changed=None,
                  packet_type_manager: Optional[PacketTypeManager] = None, # Added parameter
-                 all_packets_data: Optional[Dict[str, Dict]] = {}): # Added parameter
+                 all_packets_data: Optional[Dict[str, Dict]] = {}, # Added parameter
+                 marker_editor_window_tag: str = "marker_editor_window", # NEW parameter
+                 marker_editor_tag_suffix: str = "", # NEW parameter
+                 on_send_to_diff_1=None,
+                 on_send_to_diff_2=None):
         """Initialize the hexdump widget with default size."""
         self.tag = tag
         self.width = width
@@ -62,11 +66,20 @@ class HexdumpWidget:
         self.ksy_struct = None # Holds the parsed Kaitai Struct object
         self.ksy_parse_error = None # Holds any error during KSY parsing
         # Instantiate the MarkerEditorWindow and store as instance variable
-        self.marker_editor_window = MarkerEditorWindow(parent_widget=self, save_callback=self._handle_marker_save)
+        self.marker_editor_window = MarkerEditorWindow(
+            parent_widget=self,
+            save_callback=self._handle_marker_save,
+            tag=marker_editor_window_tag,
+            tag_suffix=marker_editor_tag_suffix
+        )
         self.is_selecting = False
         self.sequence_id = None # ID of the currently displayed packet
+        self.on_send_to_diff_1 = on_send_to_diff_1
+        self.on_send_to_diff_2 = on_send_to_diff_2
         self.on_regions_changed = on_regions_changed # Callback for when markers change (might need adjustment for KSY)
         self.options = HexdumpOptions()
+        # Mapping of byte offset to RGBA color for diff highlighting
+        self.diff_highlights: Dict[int, Tuple[int, int, int, int]] = {}
 
         # Initialize analysis windows
         self.entropy_window = None
@@ -234,6 +247,9 @@ class HexdumpWidget:
 
                 # Add KSY editor button as a standalone element
                 dpg.add_separator()
+                # Add Send to Diff menu items
+                dpg.add_menu_item(label="Send to Diff Pane 1", callback=self._send_to_diff_1)
+                dpg.add_menu_item(label="Send to Diff Pane 2", callback=self._send_to_diff_2)
                 # Removed KSY Edit button in context menu
 
             # Data preview section
@@ -1185,6 +1201,15 @@ class HexdumpWidget:
     #     """Get all markers in the current view."""
     #     return [] # Return empty list or remove method
 
+    def highlight_diffs(self, offsets: List[int], color: Tuple[int, int, int, int]):
+        """
+        Highlight the specified byte offsets with the given RGBA color.
+        Clears previous diff highlights.
+        """
+        self.diff_highlights.clear()
+        for offset in offsets:
+            self.diff_highlights[offset] = color
+
     def render(self):
         """Render the hexdump display."""
         if not self.data:
@@ -1242,6 +1267,27 @@ class HexdumpWidget:
                 group_idx = j // self.options.mid_cols_count
                 byte_x = hex_x + (j * 3 + group_idx * 2) * char_width
                 byte_offset = i + j
+
+                # Check for diff highlight first; if present, override all other highlights
+                diff_color = self.diff_highlights.get(byte_offset)
+                if diff_color:
+                    highlight_width = char_width * 2.5
+                    highlight_height = char_height
+                    dpg.draw_rectangle(
+                        parent=self.canvas,
+                        pmin=(byte_x, line_y),
+                        pmax=(byte_x + highlight_width, line_y + highlight_height),
+                        fill=diff_color
+                    )
+                    if self.options.show_ascii:
+                        ascii_highlight_x = ascii_x + j * char_width
+                        dpg.draw_rectangle(
+                            parent=self.canvas,
+                            pmin=(ascii_highlight_x, line_y),
+                            pmax=(ascii_highlight_x + char_width, line_y + highlight_height),
+                            fill=diff_color
+                        )
+                    continue  # Skip other highlight logic if diff highlight exists
     
                 marker_color = None
                 is_fuzzable = False
@@ -1456,3 +1502,16 @@ class HexdumpWidget:
              # Draw error message at the bottom or top of the canvas
              error_y = canvas_height - (char_height + line_spacing) # Position near the bottom
              dpg.draw_text(parent=self.canvas, pos=(offset_x, error_y), text=f"KSY Error: {self.ksy_parse_error}", color=(255, 0, 0, 255), size=char_height)
+    def _send_to_diff_1(self, sender, app_data):
+        """
+        Send the current sequence to Diff Pane 1 if callback is set.
+        """
+        if self.sequence_id and self.on_send_to_diff_1:
+            self.on_send_to_diff_1(self.sequence_id)
+
+    def _send_to_diff_2(self, sender, app_data):
+        """
+        Send the current sequence to Diff Pane 2 if callback is set.
+        """
+        if self.sequence_id and self.on_send_to_diff_2:
+            self.on_send_to_diff_2(self.sequence_id)

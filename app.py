@@ -5,6 +5,7 @@ import json
 from fridafuzzer_core.packet_type_manager import PacketTypeManager, PacketTypeCriteria
 import threading
 import time
+from typing import Optional
 from fridafuzzer_core.hexdump_widget import HexdumpWidget
 
 # Global state
@@ -14,6 +15,15 @@ is_running = False
 target_process = ""
 current_sequence = None  # Store current sequence for filter operations
 packet_type_manager = PacketTypeManager()
+
+# Diff view state
+diff_source_1_data: Optional[bytes] = None
+diff_source_2_data: Optional[bytes] = None
+diff_source_1_id: Optional[str] = None
+diff_source_2_id: Optional[str] = None
+diff_algorithm: str = "Basic Byte Diff"
+diff_hexdump_1 = None
+diff_hexdump_2 = None
 
 def save_sequences():
     """Save sequences to JSON file"""
@@ -160,6 +170,14 @@ def update_sequences_list():
     
     # Apply filters to sequences
     filtered_sequences = apply_filters(sequences)
+
+    # Prepare descriptive labels for diff dropdowns (unfiltered list)
+    diff_labels = [
+        f"#{seq['id']} - {seq.get('packet_type', 'undefined')} ({seq['buffer_length']} bytes)"
+        for seq in sequences
+    ]
+    dpg.configure_item("diff_source_1_dropdown", items=diff_labels)
+    dpg.configure_item("diff_source_2_dropdown", items=diff_labels)
     
     for seq in filtered_sequences:
         # Create group for each sequence with spacing
@@ -167,11 +185,19 @@ def update_sequences_list():
             # Details button
             packet_type = seq.get('packet_type', 'undefined')
             label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
-            dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, width=300)
+            btn_id = dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, width=300)
+    
+            # Add right-click popup for diff options
+            with dpg.popup(btn_id, mousebutton=dpg.mvMouseButton_Right):
+                dpg.add_menu_item(label="Send to Diff Pane 1", callback=lambda s, a, u=seq['id']: send_to_diff_pane_1(u))
+                dpg.add_menu_item(label="Send to Diff Pane 2", callback=lambda s, a, u=seq['id']: send_to_diff_pane_2(u))
             
             # Remove button with red tint
             dpg.add_button(label="Delete", callback=remove_sequence, user_data=seq['id'], width=50)
             dpg.bind_item_theme(dpg.last_item(), "delete_button_theme")
+    
+    # Run diff after updating dropdowns and list
+    run_diff()
 
 def show_sequence_details(sender, app_data, user_data):
     """Show details of selected sequence"""
@@ -383,6 +409,198 @@ def clear_filtered_sequences(sender, app_data):
     save_sequences()
     update_sequences_list()
 
+def select_diff_algorithm(sender, app_data, user_data):
+    """Callback when diff algorithm is selected"""
+    global diff_algorithm
+    diff_algorithm = app_data
+    run_diff()
+
+def select_diff_source_1(sender, app_data, user_data):
+    """Callback when source 1 packet is selected"""
+    global diff_source_1_data, diff_source_1_id
+    # Parse ID from label string
+    try:
+        label = app_data
+        id_str = label.split('-')[0].strip().lstrip('#')
+        seq_id = int(id_str)
+    except Exception:
+        print("Failed to parse diff source 1 ID from label")
+        diff_source_1_data = None
+        diff_source_1_id = None
+        run_diff()
+        return
+
+    # Find sequence by ID
+    seq = next((s for s in sequences if s['id'] == seq_id), None)
+    if seq:
+        try:
+            diff_source_1_data = bytes.fromhex(seq['hex_data'])
+            diff_source_1_id = seq['id']
+            diff_hexdump_1.set_data(diff_source_1_data, seq['id'], seq.get('markers', []))
+        except ValueError:
+            print("Invalid hex data in sequence")
+            diff_source_1_data = None
+            diff_source_1_id = None
+    else:
+        diff_source_1_data = None
+        diff_source_1_id = None
+
+    run_diff()
+
+def select_diff_source_2(sender, app_data, user_data):
+    """Callback when source 2 packet is selected"""
+    global diff_source_2_data, diff_source_2_id
+    # Parse ID from label string
+    try:
+        label = app_data
+        id_str = label.split('-')[0].strip().lstrip('#')
+        seq_id = int(id_str)
+    except Exception:
+        print("Failed to parse diff source 2 ID from label")
+        diff_source_2_data = None
+        diff_source_2_id = None
+        run_diff()
+        return
+
+    # Find sequence by ID
+    seq = next((s for s in sequences if s['id'] == seq_id), None)
+    if seq:
+        try:
+            diff_source_2_data = bytes.fromhex(seq['hex_data'])
+            diff_source_2_id = seq['id']
+            diff_hexdump_2.set_data(diff_source_2_data, seq['id'], seq.get('markers', []))
+        except ValueError:
+            print("Invalid hex data in sequence")
+            diff_source_2_data = None
+            diff_source_2_id = None
+    else:
+        diff_source_2_data = None
+        diff_source_2_id = None
+
+def send_to_diff_pane_1(sequence_id):
+    """Send the specified sequence to Diff Pane 1."""
+    global diff_source_1_id, diff_source_1_data
+
+    # Find the sequence dict by ID
+    seq = next((s for s in sequences if s['id'] == sequence_id), None)
+    if not seq:
+        print(f"Sequence with ID {sequence_id} not found.")
+        return
+
+    try:
+        diff_source_1_data = bytes.fromhex(seq['hex_data'])
+    except ValueError:
+        print("Invalid hex data in sequence")
+        diff_source_1_data = None
+        diff_source_1_id = None
+        run_diff()
+        return
+
+    diff_source_1_id = seq['id']
+
+    # Construct label as in update_sequences_list
+    packet_type = seq.get('packet_type', 'undefined')
+    label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
+    try:
+        dpg.set_value("diff_source_1_dropdown", label)
+    except:
+        pass
+
+    # Update diff hexdump widget
+    if diff_hexdump_1:
+        diff_hexdump_1.set_data(diff_source_1_data, seq['id'], seq.get('markers', []))
+
+    run_diff()
+
+
+def send_to_diff_pane_2(sequence_id):
+    """Send the specified sequence to Diff Pane 2."""
+    global diff_source_2_id, diff_source_2_data
+
+    # Find the sequence dict by ID
+    seq = next((s for s in sequences if s['id'] == sequence_id), None)
+    if not seq:
+        print(f"Sequence with ID {sequence_id} not found.")
+        return
+
+    try:
+        diff_source_2_data = bytes.fromhex(seq['hex_data'])
+    except ValueError:
+        print("Invalid hex data in sequence")
+        diff_source_2_data = None
+        diff_source_2_id = None
+        run_diff()
+        return
+
+    diff_source_2_id = seq['id']
+
+    # Construct label as in update_sequences_list
+    packet_type = seq.get('packet_type', 'undefined')
+    label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
+    try:
+        dpg.set_value("diff_source_2_dropdown", label)
+    except:
+        pass
+
+    # Update diff hexdump widget
+    if diff_hexdump_2:
+        diff_hexdump_2.set_data(diff_source_2_data, seq['id'], seq.get('markers', []))
+
+    run_diff()
+
+
+def run_diff():
+    """Perform diffing between source 1 and source 2 and highlight differences"""
+    # Clear existing highlights
+    if diff_hexdump_1:
+        diff_hexdump_1.highlight_diffs([], (0, 0, 0, 0))
+    if diff_hexdump_2:
+        diff_hexdump_2.highlight_diffs([], (0, 0, 0, 0))
+
+    # Check if both sources are available
+    if diff_source_1_data is None or diff_source_2_data is None:
+        return
+
+    # Only implement "Basic Byte Diff" for now
+    if diff_algorithm != "Basic Byte Diff":
+        return
+
+    data1 = diff_source_1_data
+    data2 = diff_source_2_data
+    len1 = len(data1)
+    len2 = len(data2)
+    min_len = min(len1, len2)
+
+    diffs_1 = []
+    diffs_2 = []
+
+    # Compare byte by byte up to shorter length
+    for i in range(min_len):
+        if data1[i] != data2[i]:
+            diffs_1.append(i)
+            diffs_2.append(i)
+
+    # Extra bytes in source 1
+    if len1 > min_len:
+        extra_offsets = list(range(min_len, len1))
+        diffs_1.extend(extra_offsets)
+    # Extra bytes in source 2
+    if len2 > min_len:
+        extra_offsets = list(range(min_len, len2))
+        diffs_2.extend(extra_offsets)
+
+    # Highlight differences in red
+    if diff_hexdump_1:
+        diff_hexdump_1.highlight_diffs(diffs_1, (255, 0, 0, 100))
+    if diff_hexdump_2:
+        diff_hexdump_2.highlight_diffs(diffs_2, (255, 0, 0, 100))
+
+    # Additionally, highlight extra bytes in green
+    if len1 > min_len and diff_hexdump_1:
+        diff_hexdump_1.highlight_diffs(list(range(min_len, len1)), (0, 255, 0, 100))
+    if len2 > min_len and diff_hexdump_2:
+        diff_hexdump_2.highlight_diffs(list(range(min_len, len2)), (0, 255, 0, 100))
+
 def clear_console(sender, app_data):
     """Clear the console output"""
     dpg.set_value("console", "")
@@ -488,7 +706,9 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                         tag="hexdump_view",
                         width=780,
                         height=570,
-                        on_regions_changed=update_sequence_regions
+                        on_regions_changed=update_sequence_regions,
+                        on_send_to_diff_1=send_to_diff_pane_1,
+                        on_send_to_diff_2=send_to_diff_pane_2
                     )
                     # The hexdump widget handles its own context menu
 
@@ -513,11 +733,63 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                 dpg.add_separator()
                 dpg.add_text("Existing Packet Types")
                 dpg.add_child_window(tag="packet_types_list", height=300)
+
+        # Diff View tab
+        with dpg.tab(label="Diff View", tag="diff_view_tab", parent="main_tab_bar"):
+            # Controls at the top
+            with dpg.group(horizontal=True):
+                dpg.add_combo(
+                    items=["Basic Byte Diff"],
+                    default_value="Basic Byte Diff",
+                    callback=select_diff_algorithm,
+                    tag="diff_algorithm_dropdown",
+                    label="Diff Algorithm"
+                )
+
+            # Split screen container
+            with dpg.group(horizontal=True):
+                # Left pane
+                with dpg.child_window(width=600, height=600, tag="diff_pane_1"):
+                    dpg.add_combo(
+                        items=[],
+                        callback=select_diff_source_1,
+                        tag="diff_source_1_dropdown",
+                        label="Source Packet 1",
+                        width=200
+                    )
+                    # Create left hexdump widget
+                    diff_hexdump_1 = HexdumpWidget(
+                        packet_type_manager=packet_type_manager,
+                        tag="diff_hexdump_1",
+                        width=580,
+                        height=550,
+                        marker_editor_window_tag="diff_marker_editor_window_1",
+                        marker_editor_tag_suffix="_diff1"
+                    )
+
+                # Right pane
+                with dpg.child_window(width=600, height=600, tag="diff_pane_2"):
+                    dpg.add_combo(
+                        items=[],
+                        callback=select_diff_source_2,
+                        tag="diff_source_2_dropdown",
+                        label="Source Packet 2",
+                        width=200
+                    )
+                    # Create right hexdump widget
+                    diff_hexdump_2 = HexdumpWidget(
+                        packet_type_manager=packet_type_manager,
+                        tag="diff_hexdump_2",
+                        width=580,
+                        height=550,
+                        marker_editor_window_tag="diff_marker_editor_window_2",
+                        marker_editor_tag_suffix="_diff2"
+                    )
 # Load existing sequences
 load_sequences()
 
 # Initialize packet type management buttons
-update_packet_types_list()
+# update_packet_types_list()
 
 
 # Start message processing thread
