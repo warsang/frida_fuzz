@@ -8,6 +8,7 @@ import time
 from typing import Optional
 from fridafuzzer_core.hexdump_widget import HexdumpWidget
 
+
 # Global state
 message_queue = Queue()
 sequences = []
@@ -65,7 +66,11 @@ def process_messages():
                         message['markers'] = []
                     sequences.append(message)
                     # Update console
-                    console_text = dpg.get_value("console") + "\n" + json.dumps(message, indent=2)
+                    # Fix: handle None for console value
+                    console_val = dpg.get_value("console")
+                    if console_val is None:
+                        console_val = ""
+                    console_text = console_val + "\n" + json.dumps(message, indent=2)
                     dpg.set_value("console", console_text)
                     # Update sequences list
                     update_sequences_list()
@@ -121,8 +126,11 @@ def reset_callstack_filter(sender, app_data):
 def reset_all_filters(sender, app_data):
     """Reset all filters to their default values"""
     dpg.set_value("size_filter", 0)
+    dpg.set_value("exclude_size_filter", 0)
     dpg.set_value("host_filter", "")
+    dpg.set_value("exclude_host_filter", "")
     dpg.set_value("port_filter", "")
+    dpg.set_value("exclude_port_filter", "")
     dpg.set_value("callstack_filter", "")
     dpg.set_value("callstack_word_filter", "")
     update_sequences_list()
@@ -130,8 +138,11 @@ def reset_all_filters(sender, app_data):
 def apply_filters(sequences_list):
     """Apply filters to the sequences list"""
     size_filter = dpg.get_value("size_filter")
+    exclude_size_filter = dpg.get_value("exclude_size_filter")
     host_filter = dpg.get_value("host_filter").strip()
+    exclude_host_filter = dpg.get_value("exclude_host_filter").strip()
     port_filter = dpg.get_value("port_filter").strip()
+    exclude_port_filter = dpg.get_value("exclude_port_filter").strip()
     hide_received = dpg.get_value("hide_received")
     callstack_filter = dpg.get_value("callstack_filter").strip()
     callstack_word = dpg.get_value("callstack_word_filter").strip()
@@ -161,6 +172,14 @@ def apply_filters(sequences_list):
     # Filter out received packets if hide_received is enabled
     if hide_received:
         filtered = [seq for seq in filtered if seq.get('direction') != 'receive']
+
+    # Apply exclusion filters
+    if exclude_size_filter > 0:
+        filtered = [seq for seq in filtered if seq['buffer_length'] != exclude_size_filter]
+    if exclude_host_filter:
+        filtered = [seq for seq in filtered if exclude_host_filter not in seq['socket_info']]
+    if exclude_port_filter:
+        filtered = [seq for seq in filtered if exclude_port_filter not in seq['socket_info']]
     
     return filtered
 
@@ -172,9 +191,11 @@ def update_sequences_list():
     filtered_sequences = apply_filters(sequences)
 
     # Prepare descriptive labels for diff dropdowns (unfiltered list)
+    # Fix: skip sequences missing 'id' or 'buffer_length'
     diff_labels = [
         f"#{seq['id']} - {seq.get('packet_type', 'undefined')} ({seq['buffer_length']} bytes)"
         for seq in sequences
+        if 'id' in seq and 'buffer_length' in seq
     ]
     dpg.configure_item("diff_source_1_dropdown", items=diff_labels)
     dpg.configure_item("diff_source_2_dropdown", items=diff_labels)
@@ -242,10 +263,14 @@ def show_sequence_details(sender, app_data, user_data):
         hexdump_widget.set_data(data, seq['id'])
         
         # Update packet type management buttons
-        dpg.configure_item("remove_type_button", user_data=seq['id'], enabled=True)
+        # Only configure the button if it exists
+        if dpg.does_item_exist("remove_type_button"):
+            dpg.configure_item("remove_type_button", user_data=seq['id'], enabled=True)
+        # Only configure assign_type buttons if they exist
         for type_data in packet_type_manager.types:
-            dpg.configure_item(f"assign_type_{type_data['name']}",
-                            user_data=(seq['id'], type_data['name']), enabled=True)
+            btn_name = f"assign_type_{type_data['name']}"
+            if dpg.does_item_exist(btn_name):
+                dpg.configure_item(btn_name, user_data=(seq['id'], type_data['name']), enabled=True)
         
         # Set data with markers
         hexdump_widget.set_data(data, seq['id'], seq.get('markers', []))
@@ -431,7 +456,8 @@ def select_diff_source_1(sender, app_data, user_data):
         return
 
     # Find sequence by ID
-    seq = next((s for s in sequences if s['id'] == seq_id), None)
+    # Safely handle sequences that may not have an 'id'
+    seq = next((s for s in sequences if 'id' in s and s['id'] == seq_id), None)
     if seq:
         try:
             diff_source_1_data = bytes.fromhex(seq['hex_data'])
@@ -463,7 +489,8 @@ def select_diff_source_2(sender, app_data, user_data):
         return
 
     # Find sequence by ID
-    seq = next((s for s in sequences if s['id'] == seq_id), None)
+    # Safely handle sequences that may not have an 'id'
+    seq = next((s for s in sequences if 'id' in s and s['id'] == seq_id), None)
     if seq:
         try:
             diff_source_2_data = bytes.fromhex(seq['hex_data'])
@@ -561,8 +588,93 @@ def run_diff():
     if diff_source_1_data is None or diff_source_2_data is None:
         return
 
-    # Only implement "Basic Byte Diff" for now
-    if diff_algorithm != "Basic Byte Diff":
+    # Implement multiple diff algorithms
+    data1 = diff_source_1_data
+    data2 = diff_source_2_data
+    len1 = len(data1)
+    len2 = len(data2)
+    min_len = min(len1, len2)
+
+    diffs_1 = []
+    diffs_2 = []
+    sames_1 = []
+    sames_2 = []
+
+    if diff_algorithm == "Basic Byte Diff":
+        # Compare byte by byte up to shorter length
+        for i in range(min_len):
+            if data1[i] != data2[i]:
+                diffs_1.append(i)
+                diffs_2.append(i)
+            else:
+                sames_1.append(i)
+                sames_2.append(i)
+        # Extra bytes in source 1
+        if len1 > min_len:
+            extra_offsets = list(range(min_len, len1))
+            diffs_1.extend(extra_offsets)
+        # Extra bytes in source 2
+        if len2 > min_len:
+            extra_offsets = list(range(min_len, len2))
+            diffs_2.extend(extra_offsets)
+
+    elif diff_algorithm == "Histogram Diff":
+        # Highlight bytes that are unique to each source
+        from collections import Counter
+        c1 = Counter(data1)
+        c2 = Counter(data2)
+        unique1 = set(c1.keys()) - set(c2.keys())
+        unique2 = set(c2.keys()) - set(c1.keys())
+        for i, b in enumerate(data1):
+            if b in unique1:
+                diffs_1.append(i)
+            else:
+                sames_1.append(i)
+        for i, b in enumerate(data2):
+            if b in unique2:
+                diffs_2.append(i)
+            else:
+                sames_2.append(i)
+
+    elif diff_algorithm == "Binary Delta":
+        # Use bsdiff4 to generate a patch and highlight changed bytes
+        try:
+            import bsdiff4
+        except ImportError:
+            print("bsdiff4 not installed")
+            return
+        patch = bsdiff4.diff(data1, data2)
+        # For visualization, highlight all bytes that would be patched
+        # (bsdiff4 does not expose changed offsets, so fallback to bytewise diff)
+        for i in range(min_len):
+            if data1[i] != data2[i]:
+                diffs_1.append(i)
+                diffs_2.append(i)
+            else:
+                sames_1.append(i)
+                sames_2.append(i)
+        if len1 > min_len:
+            diffs_1.extend(range(min_len, len1))
+        if len2 > min_len:
+            diffs_2.extend(range(min_len, len2))
+
+            if data1[i] != data2[i]:
+                diffs_1.append(i)
+                diffs_2.append(i)
+            else:
+                sames_1.append(i)
+                sames_2.append(i)
+        if len1 > min_len:
+            diffs_1.extend(range(min_len, len1))
+        if len2 > min_len:
+            diffs_2.extend(range(min_len, len2))
+
+            diffs_1.extend(range(min_len, len1))
+        if len2 > min_len:
+            diffs_2.extend(range(min_len, len2))
+
+    else:
+        # Unknown algorithm, do nothing
         return
 
     data1 = diff_source_1_data
@@ -648,16 +760,22 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                     with dpg.group(horizontal=True):
                         dpg.add_text("Size:")
                         dpg.add_input_int(tag="size_filter", width=100, default_value=0, callback=update_sequences_list)
+                        dpg.add_text("Exclude Size:")
+                        dpg.add_input_int(tag="exclude_size_filter", width=100, default_value=0, callback=update_sequences_list)
                     
                     # Host filter
                     with dpg.group(horizontal=True):
                         dpg.add_text("Host:")
                         dpg.add_input_text(tag="host_filter", width=100, callback=update_sequences_list)
+                        dpg.add_text("Exclude Host:")
+                        dpg.add_input_text(tag="exclude_host_filter", width=100, callback=update_sequences_list)
                     
                     # Port filter
                     with dpg.group(horizontal=True):
                         dpg.add_text("Port:")
                         dpg.add_input_text(tag="port_filter", width=100, callback=update_sequences_list)
+                        dpg.add_text("Exclude Port:")
+                        dpg.add_input_text(tag="exclude_port_filter", width=100, callback=update_sequences_list)
                     
                     # Callstack filter
                     with dpg.group(horizontal=True):
@@ -740,7 +858,7 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
             # Controls at the top
             with dpg.group(horizontal=True):
                 dpg.add_combo(
-                    items=["Basic Byte Diff"],
+                    items=["Basic Byte Diff", "Histogram Diff", "Binary Delta"],
                     default_value="Basic Byte Diff",
                     callback=select_diff_algorithm,
                     tag="diff_algorithm_dropdown",

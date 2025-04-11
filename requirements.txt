@@ -5,3 +5,4 @@ scipy>=1.10.0
 pyyaml>=6.0.1
 kaitaistruct>=0.10
 ruamel.yaml>=0.17.21
+bsdiff4>=1.2.4
