@@ -1203,41 +1203,60 @@ class HexdumpWidget:
 
     def highlight_diffs(self, offsets: List[int], color: Tuple[int, int, int, int]):
         """
-        Highlight the specified byte offsets with the given RGBA color.
-        Clears previous diff highlights.
+        Legacy: Highlight the specified byte offsets with the given RGBA color.
+        Clears previous diff highlights. Only supports one color.
         """
         self.diff_highlights.clear()
+        self.same_highlights.clear()
         for offset in offsets:
             self.diff_highlights[offset] = color
 
+    def set_highlights(
+        self,
+        diff_offsets: List[int],
+        diff_color: Tuple[int, int, int, int],
+        same_offsets: List[int],
+        same_color: Tuple[int, int, int, int]
+    ):
+        """
+        Set both diff and same highlights at once.
+        """
+        self.diff_highlights.clear()
+        self.same_highlights = {}
+        for offset in diff_offsets:
+            self.diff_highlights[offset] = diff_color
+        for offset in same_offsets:
+            # Only set if not already a diff (diff takes precedence)
+            if offset not in self.diff_highlights:
+                self.same_highlights[offset] = same_color
     def render(self):
         """Render the hexdump display."""
         if not self.data:
             if dpg.does_item_exist(self.canvas):
                 dpg.delete_item(self.canvas, children_only=True)
             return
-    
+
         if dpg.does_item_exist(self.canvas):
             dpg.delete_item(self.canvas, children_only=True)
         else:
             print("Error: Canvas item does not exist for rendering.")
             return
-    
+
         scale = dpg.get_global_font_scale()
         char_width = int(10 * scale)
         char_height = int(20 * scale)
         line_spacing = int(5 * scale)
-    
+
         offset_width = 8
         bytes_per_line = self.options.columns
-    
+
         offset_x = int(40 * scale)
         hex_x = offset_x + (offset_width + 4) * char_width
         ascii_x = hex_x + (bytes_per_line * 3 + (bytes_per_line // self.options.mid_cols_count) * 2) * char_width
-    
+
         canvas_width = dpg.get_item_configuration(self.canvas)["width"]
         canvas_height = dpg.get_item_configuration(self.canvas)["height"]
-    
+
         if self.options.show_ascii:
             separator_x = ascii_x - char_width
             dpg.draw_line(
@@ -1247,13 +1266,13 @@ class HexdumpWidget:
                 color=self.separator_color,
                 thickness=1
             )
-    
+
         y = int(20 * scale)
-    
+
         for i in range(0, len(self.data), bytes_per_line):
             chunk = self.data[i:i+bytes_per_line]
             line_y = y + (i // bytes_per_line) * (char_height + line_spacing)
-    
+
             offset_text = f"{i:08x}: " if not self.options.uppercase_hex else f"{i:08X}: "
             dpg.draw_text(
                 parent=self.canvas,
@@ -1262,22 +1281,25 @@ class HexdumpWidget:
                 color=(200, 200, 200, 255),
                 size=char_height
             )
-    
+
             for j, byte in enumerate(chunk):
                 group_idx = j // self.options.mid_cols_count
                 byte_x = hex_x + (j * 3 + group_idx * 2) * char_width
                 byte_offset = i + j
 
-                # Check for diff highlight first; if present, override all other highlights
+                # --- DIFF/SAME HIGHLIGHT LAYERING ---
+                # Draw diff highlight if present, else same highlight if present
                 diff_color = self.diff_highlights.get(byte_offset)
-                if diff_color:
+                same_color = getattr(self, "same_highlights", {}).get(byte_offset) if hasattr(self, "same_highlights") else None
+                if diff_color or same_color:
                     highlight_width = char_width * 2.5
                     highlight_height = char_height
+                    color = diff_color if diff_color else same_color
                     dpg.draw_rectangle(
                         parent=self.canvas,
                         pmin=(byte_x, line_y),
                         pmax=(byte_x + highlight_width, line_y + highlight_height),
-                        fill=diff_color
+                        fill=color
                     )
                     if self.options.show_ascii:
                         ascii_highlight_x = ascii_x + j * char_width
@@ -1285,10 +1307,10 @@ class HexdumpWidget:
                             parent=self.canvas,
                             pmin=(ascii_highlight_x, line_y),
                             pmax=(ascii_highlight_x + char_width, line_y + highlight_height),
-                            fill=diff_color
+                            fill=color
                         )
-                    continue  # Skip other highlight logic if diff highlight exists
-    
+                    # Continue to draw marker/selection/cursor overlays if needed
+
                 marker_color = None
                 is_fuzzable = False
 
@@ -1330,29 +1352,29 @@ class HexdumpWidget:
                         elif field_info.get('is_fuzzable', False):
                             is_fuzzable = True
                             marker_color = (255, 100, 100, 120)
-    
+
                 is_selected = (
                     self.current_selection and
                     min(self.current_selection.start_offset, self.current_selection.end_offset) <= byte_offset <= max(self.current_selection.start_offset, self.current_selection.end_offset)
                 )
-    
+
                 is_cursor = (
                     self.current_selection and
                     self.current_selection.start_offset == self.current_selection.end_offset and
                     byte_offset == self.current_selection.start_offset
                 )
-    
+
                 if marker_color or is_selected or is_fuzzable:
                     highlight_width = char_width * 2.5
                     highlight_height = char_height
-    
+
                     if is_selected:
                         color = self.selection_color
                     elif is_fuzzable:
                         color = (255, 100, 100, 120)
                     else:
                         color = marker_color if marker_color else (0, 0, 0, 0)
-    
+
                     if color[3] > 0:
                         dpg.draw_rectangle(
                             parent=self.canvas,
@@ -1360,7 +1382,7 @@ class HexdumpWidget:
                             pmax=(byte_x + highlight_width, line_y + highlight_height),
                             fill=color
                         )
-    
+
                         if self.options.show_ascii:
                             ascii_highlight_x = ascii_x + j * char_width
                             dpg.draw_rectangle(
@@ -1369,7 +1391,7 @@ class HexdumpWidget:
                                 pmax=(ascii_highlight_x + char_width, line_y + highlight_height),
                                 fill=color
                             )
-    
+
                 if is_cursor:
                     cursor_color = (255, 255, 255, 200)
                     dpg.draw_line(
@@ -1388,14 +1410,14 @@ class HexdumpWidget:
                             color=cursor_color,
                             thickness=2
                         )
-    
+
                 if self.options.show_hexii and byte == 0:
                     hex_text = "  "
                 elif self.options.show_hexii and 32 <= byte <= 126:
                     hex_text = f".{chr(byte)}"
                 else:
                     hex_text = f"{byte:02X}" if self.options.uppercase_hex else f"{byte:02x}"
-    
+
                 text_color = self.disabled_color if byte == 0 and self.options.grey_out_zeroes else self.text_color
                 dpg.draw_text(
                     parent=self.canvas,

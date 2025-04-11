@@ -550,12 +550,12 @@ def send_to_diff_pane_2(sequence_id):
 
 
 def run_diff():
-    """Perform diffing between source 1 and source 2 and highlight differences"""
+    """Perform diffing between source 1 and source 2 and highlight differences (diff: red, same: green)"""
     # Clear existing highlights
     if diff_hexdump_1:
-        diff_hexdump_1.highlight_diffs([], (0, 0, 0, 0))
+        diff_hexdump_1.set_highlights([], (0, 0, 0, 0), [], (0, 0, 0, 0))
     if diff_hexdump_2:
-        diff_hexdump_2.highlight_diffs([], (0, 0, 0, 0))
+        diff_hexdump_2.set_highlights([], (0, 0, 0, 0), [], (0, 0, 0, 0))
 
     # Check if both sources are available
     if diff_source_1_data is None or diff_source_2_data is None:
@@ -573,12 +573,17 @@ def run_diff():
 
     diffs_1 = []
     diffs_2 = []
+    sames_1 = []
+    sames_2 = []
 
     # Compare byte by byte up to shorter length
     for i in range(min_len):
         if data1[i] != data2[i]:
             diffs_1.append(i)
             diffs_2.append(i)
+        else:
+            sames_1.append(i)
+            sames_2.append(i)
 
     # Extra bytes in source 1
     if len1 > min_len:
@@ -589,17 +594,13 @@ def run_diff():
         extra_offsets = list(range(min_len, len2))
         diffs_2.extend(extra_offsets)
 
-    # Highlight differences in red
+    # Set highlights: diff = red, same = green, for both panes
+    diff_color = (255, 0, 0, 100)
+    same_color = (0, 255, 0, 100)
     if diff_hexdump_1:
-        diff_hexdump_1.highlight_diffs(diffs_1, (255, 0, 0, 100))
+        diff_hexdump_1.set_highlights(diffs_1, diff_color, sames_1, same_color)
     if diff_hexdump_2:
-        diff_hexdump_2.highlight_diffs(diffs_2, (255, 0, 0, 100))
-
-    # Additionally, highlight extra bytes in green
-    if len1 > min_len and diff_hexdump_1:
-        diff_hexdump_1.highlight_diffs(list(range(min_len, len1)), (0, 255, 0, 100))
-    if len2 > min_len and diff_hexdump_2:
-        diff_hexdump_2.highlight_diffs(list(range(min_len, len2)), (0, 255, 0, 100))
+        diff_hexdump_2.set_highlights(diffs_2, diff_color, sames_2, same_color)
 
 def clear_console(sender, app_data):
     """Clear the console output"""
