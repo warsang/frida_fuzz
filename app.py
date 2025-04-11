@@ -746,6 +746,7 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                     tag="diff_algorithm_dropdown",
                     label="Diff Algorithm"
                 )
+                dpg.add_button(label="Refresh diff", callback=run_diff)
 
             # Split screen container
             with dpg.group(horizontal=True):

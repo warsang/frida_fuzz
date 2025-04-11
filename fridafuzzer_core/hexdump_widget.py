@@ -1229,6 +1229,7 @@ class HexdumpWidget:
             # Only set if not already a diff (diff takes precedence)
             if offset not in self.diff_highlights:
                 self.same_highlights[offset] = same_color
+        self.render() # Trigger redraw after highlights are set
     def render(self):
         """Render the hexdump display."""
         if not self.data:
