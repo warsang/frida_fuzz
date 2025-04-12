@@ -6,3 +6,5 @@ pyyaml>=6.0.1
 kaitaistruct>=0.10
 ruamel.yaml>=0.17.21
 bsdiff4>=1.2.4
+biopython>=1.83
+pywfa>=0.3.0

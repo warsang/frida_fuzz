@@ -11,6 +11,8 @@
 * Implemented offset-aware insertion with skip fields
 * Implemented skip merging on removal
 * Initialized Memory Bank
+* Created comprehensive documentation for biodiff algorithms (2025-04-12)
+* Updated README.md to include biodiff capabilities (2025-04-12)
 
 ## Current Tasks
 

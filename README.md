@@ -10,26 +10,42 @@ The application enables security researchers and network analysts to:
 - Mark and annotate regions of interest in captured packets
 - Generate Kaitai Struct definitions for packet formats
 - Save and load captured network sequences for offline analysis
+- Compare binary data using advanced diffing algorithms
+
+## Binary Diffing Capabilities
+
+The tool includes advanced binary diffing algorithms for comparing and analyzing differences between captured packets:
+
+- **Wavefront Alignment (WFA2)**: Fast and memory-efficient alignment for large binary sequences
+- **Needleman-Wunsch**: Global alignment for comparing entire packet structures
+- **Smith-Waterman**: Local alignment for finding similar regions in different packets
+
+For detailed documentation on these algorithms and how to use them, see [Binary Diffing Algorithms](docs/biodiff_algorithms.md).
 
 ## Repository Structure
 ```
 .
 ├── app.py                  # Main application entry point with DearPyGui UI and core logic
-├── entropy_analyzer.py     # Entropy calculation and visualization components
-├── entropy_window.py       # Window for displaying entropy analysis results
-├── frequency_analyzer.py   # Byte frequency analysis components
-├── frequency_window.py     # Window for displaying frequency analysis results
-├── frida_handler.py       # Frida integration for network function interception
-├── hexdump_widget.py      # Interactive hexadecimal data viewer widget
-├── ksy_editor_window.py   # Editor for Kaitai Struct YAML definitions
-├── ksy_manager.py         # Management of Kaitai Struct definitions
-├── main.py               # Standalone Frida script for testing/development
-├── marker_manager.py     # Management of data region markers
-├── marker_types.json     # Configuration for marker types
-├── packet_type_manager.py # Management of packet type definitions
-├── packet_types.json     # Configuration for packet type definitions
-├── requirements.txt      # Python package dependencies
-└── widgets.py           # Common UI widget components
+├── docs/                   # Documentation directory
+│   └── biodiff_algorithms.md # Documentation for binary diffing algorithms
+├── fridafuzzer_core/       # Core functionality modules
+│   ├── biodiff_algorithms.py # Binary diffing algorithms implementation
+│   ├── entropy_analyzer.py   # Entropy calculation and visualization components
+│   ├── entropy_window.py     # Window for displaying entropy analysis results
+│   ├── frequency_analyzer.py # Byte frequency analysis components
+│   ├── frequency_window.py   # Window for displaying frequency analysis results
+│   ├── frida_handler.py      # Frida integration for network function interception
+│   ├── hexdump_widget.py     # Interactive hexadecimal data viewer widget
+│   ├── ksy_editor_window.py  # Editor for Kaitai Struct YAML definitions
+│   ├── ksy_manager.py        # Management of Kaitai Struct definitions
+│   ├── marker_manager.py     # Management of data region markers
+│   ├── packet_type_manager.py # Management of packet type definitions
+│   └── widgets.py            # Common UI widget components
+├── main.py                 # Standalone Frida script for testing/development
+├── marker_types.json       # Configuration for marker types
+├── packet_types.json       # Configuration for packet type definitions
+├── requirements.txt        # Python package dependencies
+└── tests/                  # Test files and test data
 ```
 
 ## Usage Instructions
@@ -49,6 +65,8 @@ kaitaistruct>=0.10
 ```
 
 ### Installation
+
+> **See the full [Installation Guide](docs/installation.md) for detailed setup instructions, OS-specific notes, and troubleshooting.**
 
 1. Clone the repository:
 ```bash

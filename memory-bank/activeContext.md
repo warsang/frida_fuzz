@@ -17,6 +17,8 @@
 * Added context menu for define/modify/remove KSY fields
 * Implemented offset-aware insertion and skip merging
 * Initialized Memory Bank
+* Created documentation for biodiff algorithms (2025-04-12)
+* Updated README.md to include biodiff capabilities (2025-04-12)
 
 ## Open Questions/Issues
 

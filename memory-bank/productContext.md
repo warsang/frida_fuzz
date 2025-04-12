@@ -17,6 +17,7 @@ Enable interactive, offset-accurate editing of Kaitai Struct (KSY) definitions d
 * Immediate reloading of KSY after edits
 * Packet type manager integration for KSY file association
 * Support for marking fields as fuzzable
+* Advanced binary diffing algorithms (Wavefront, Needleman-Wunsch, Smith-Waterman)
 * Memory Bank to track architecture, progress, and decisions
 
 ## Overall Architecture
