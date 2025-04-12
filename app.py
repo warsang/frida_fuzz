@@ -617,6 +617,13 @@ def run_diff():
         if len2 > min_len:
             extra_offsets = list(range(min_len, len2))
             diffs_2.extend(extra_offsets)
+        # Set highlights for Basic Byte Diff
+        diff_color = (255, 0, 0, 100)  # red
+        same_color = (0, 255, 0, 100)  # green
+        if diff_hexdump_1:
+            diff_hexdump_1.set_highlights(diffs_1, diff_color, sames_1, same_color)
+        if diff_hexdump_2:
+            diff_hexdump_2.set_highlights(diffs_2, diff_color, sames_2, same_color)
 
     elif diff_algorithm == "Histogram Diff":
         # Highlight bytes that are unique to each source
@@ -635,6 +642,13 @@ def run_diff():
                 diffs_2.append(i)
             else:
                 sames_2.append(i)
+        # Set highlights for Histogram Diff
+        diff_color = (255, 0, 0, 100)  # red
+        same_color = (0, 255, 0, 100)  # green
+        if diff_hexdump_1:
+            diff_hexdump_1.set_highlights(diffs_1, diff_color, sames_1, same_color)
+        if diff_hexdump_2:
+            diff_hexdump_2.set_highlights(diffs_2, diff_color, sames_2, same_color)
 
     elif diff_algorithm == "Binary Delta":
         # Use bsdiff4 to generate a patch and highlight changed bytes
@@ -658,68 +672,91 @@ def run_diff():
         if len2 > min_len:
             diffs_2.extend(range(min_len, len2))
 
-            if data1[i] != data2[i]:
-                diffs_1.append(i)
-                diffs_2.append(i)
+        # Set highlights for Binary Delta
+        diff_color = (255, 0, 0, 100)  # red
+        same_color = (0, 255, 0, 100)  # green
+        if diff_hexdump_1:
+            diff_hexdump_1.set_highlights(diffs_1, diff_color, sames_1, same_color)
+        if diff_hexdump_2:
+            diff_hexdump_2.set_highlights(diffs_2, diff_color, sames_2, same_color)
+
+    elif diff_algorithm == "Fuzzy Block Matching":
+        # Fuzzy block-based diff using difflib
+        import difflib
+
+        block_size = 16  # You can adjust block size as needed
+        num_blocks1 = (len(data1) + block_size - 1) // block_size
+        num_blocks2 = (len(data2) + block_size - 1) // block_size
+        min_blocks = min(num_blocks1, num_blocks2)
+
+        # Color thresholds (percent similarity)
+        # >90%: green, >70%: yellow, >50%: orange, else: red
+        green = (0, 255, 0, 100)
+        yellow = (255, 255, 0, 100)
+        orange = (255, 165, 0, 100)
+        red = (255, 0, 0, 100)
+
+        # For each block, compare and assign color
+        color_map_1 = {}
+        color_map_2 = {}
+
+        for b in range(min_blocks):
+            start = b * block_size
+            end1 = min(start + block_size, len(data1))
+            end2 = min(start + block_size, len(data2))
+            block1 = data1[start:end1]
+            block2 = data2[start:end2]
+            # Use difflib to compute similarity
+            sm = difflib.SequenceMatcher(None, block1, block2)
+            ratio = sm.ratio()
+            if ratio > 0.9:
+                color = green
+            elif ratio > 0.7:
+                color = yellow
+            elif ratio > 0.5:
+                color = orange
             else:
-                sames_1.append(i)
-                sames_2.append(i)
-        if len1 > min_len:
-            diffs_1.extend(range(min_len, len1))
-        if len2 > min_len:
-            diffs_2.extend(range(min_len, len2))
+                color = red
+            for i in range(start, end1):
+                color_map_1[i] = color
+            for i in range(start, end2):
+                color_map_2[i] = color
 
-            diffs_1.extend(range(min_len, len1))
-        if len2 > min_len:
-            diffs_2.extend(range(min_len, len2))
+        # Handle extra blocks in either data1 or data2
+        for b in range(min_blocks, num_blocks1):
+            start = b * block_size
+            end = min(start + block_size, len(data1))
+            for i in range(start, end):
+                color_map_1[i] = red
+        for b in range(min_blocks, num_blocks2):
+            start = b * block_size
+            end = min(start + block_size, len(data2))
+            for i in range(start, end):
+                color_map_2[i] = red
 
-    else:
-        # Unknown algorithm, do nothing
-        return
+        # Now, group offsets by color for set_highlights (green = same, others = diff)
+        sames_1 = [i for i, c in color_map_1.items() if c == green]
+        diffs_1 = [i for i, c in color_map_1.items() if c != green]
+        sames_2 = [i for i, c in color_map_2.items() if c == green]
+        diffs_2 = [i for i, c in color_map_2.items() if c != green]
 
-    data1 = diff_source_1_data
-    data2 = diff_source_2_data
-    len1 = len(data1)
-    len2 = len(data2)
-    min_len = min(len1, len2)
+        # Use red for diffs, green for sames (limitation of set_highlights)
+        diff_color = red
+        same_color = green
+        if diff_hexdump_1:
+            diff_hexdump_1.set_highlights(diffs_1, diff_color, sames_1, same_color)
+        if diff_hexdump_2:
+            diff_hexdump_2.set_highlights(diffs_2, diff_color, sames_2, same_color)
+        # No return statement needed here; block ends cleanly.
 
-    diffs_1 = []
-    diffs_2 = []
-    sames_1 = []
-    sames_2 = []
-
-    # Compare byte by byte up to shorter length
-    for i in range(min_len):
-        if data1[i] != data2[i]:
-            diffs_1.append(i)
-            diffs_2.append(i)
-        else:
-            sames_1.append(i)
-            sames_2.append(i)
-
-    # Extra bytes in source 1
-    if len1 > min_len:
-        extra_offsets = list(range(min_len, len1))
-        diffs_1.extend(extra_offsets)
-    # Extra bytes in source 2
-    if len2 > min_len:
-        extra_offsets = list(range(min_len, len2))
-        diffs_2.extend(extra_offsets)
-
-    # Set highlights: diff = red, same = green, for both panes
-    diff_color = (255, 0, 0, 100)
-    same_color = (0, 255, 0, 100)
-    if diff_hexdump_1:
-        diff_hexdump_1.set_highlights(diffs_1, diff_color, sames_1, same_color)
-    if diff_hexdump_2:
-        diff_hexdump_2.set_highlights(diffs_2, diff_color, sames_2, same_color)
-
+# The following functions are outside of run_diff and should not be indented.
 def clear_console(sender, app_data):
     """Clear the console output"""
     dpg.set_value("console", "")
 
 # Initialize DearPyGui
 dpg.create_context()
+
 
 # Create theme for delete button
 with dpg.theme(tag="delete_button_theme"):
@@ -858,7 +895,7 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
             # Controls at the top
             with dpg.group(horizontal=True):
                 dpg.add_combo(
-                    items=["Basic Byte Diff", "Histogram Diff", "Binary Delta"],
+                    items=["Basic Byte Diff", "Histogram Diff", "Binary Delta", "Fuzzy Block Matching"],
                     default_value="Basic Byte Diff",
                     callback=select_diff_algorithm,
                     tag="diff_algorithm_dropdown",
