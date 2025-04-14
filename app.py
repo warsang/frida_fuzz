@@ -71,20 +71,30 @@ def process_messages():
                     if 'markers' not in message:
                         message['markers'] = []
                     sequences.append(message)
-                    # Update console
-                    # Fix: handle None for console value
-                    console_val = dpg.get_value("console")
-                    if console_val is None:
-                        console_val = ""
-                    console_text = console_val + "\n" + json.dumps(message, indent=2)
-                    dpg.set_value("console", console_text)
-                    # Update sequences list
-                    update_sequences_list()
-                    # Save sequences to file
-                    save_sequences()
+                    
+                    try:
+                        # Update console
+                        # Fix: handle None for console value
+                        console_val = dpg.get_value("console")
+                        if console_val is None:
+                            console_val = ""
+                        console_text = console_val + "\n" + json.dumps(message, indent=2)
+                        dpg.set_value("console", console_text)
+                        
+                        # Update sequences list
+                        update_sequences_list()
+                        
+                        # Save sequences to file
+                        save_sequences()
+                    except Exception as e:
+                        print(f"Error updating UI after processing message: {e}")
+                        import traceback
+                        print(traceback.format_exc())
             time.sleep(0.1)  # Small delay to prevent high CPU usage
         except Exception as e:
             print(f"Error processing messages: {e}")
+            import traceback
+            print(traceback.format_exc())
 
 def start_intercepting(sender, app_data):
     """Start Frida interception"""
@@ -191,40 +201,49 @@ def apply_filters(sequences_list):
 
 def update_sequences_list():
     """Update the sequences list in the UI"""
-    dpg.delete_item("sequences_list", children_only=True)
-    
-    # Apply filters to sequences
-    filtered_sequences = apply_filters(sequences)
+    try:
+        dpg.delete_item("sequences_list", children_only=True)
+        
+        # Apply filters to sequences
+        filtered_sequences = apply_filters(sequences)
 
-    # Prepare descriptive labels for diff dropdowns (unfiltered list)
-    # Fix: skip sequences missing 'id' or 'buffer_length'
-    diff_labels = [
-        f"#{seq['id']} - {seq.get('packet_type', 'undefined')} ({seq['buffer_length']} bytes)"
-        for seq in sequences
-        if 'id' in seq and 'buffer_length' in seq
-    ]
-    dpg.configure_item("diff_source_1_dropdown", items=diff_labels)
-    dpg.configure_item("diff_source_2_dropdown", items=diff_labels)
-    
-    for seq in filtered_sequences:
-        # Create group for each sequence with spacing
-        with dpg.group(horizontal=True, parent="sequences_list"):
-            # Details button
-            packet_type = seq.get('packet_type', 'undefined')
-            label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
-            btn_id = dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, width=300)
-    
-            # Add right-click popup for diff options
-            with dpg.popup(btn_id, mousebutton=dpg.mvMouseButton_Right):
-                dpg.add_menu_item(label="Send to Diff Pane 1", callback=lambda s, a, u=seq['id']: send_to_diff_pane_1(u))
-                dpg.add_menu_item(label="Send to Diff Pane 2", callback=lambda s, a, u=seq['id']: send_to_diff_pane_2(u))
-            
-            # Remove button with red tint
-            dpg.add_button(label="Delete", callback=remove_sequence, user_data=seq['id'], width=50)
-            dpg.bind_item_theme(dpg.last_item(), "delete_button_theme")
-    
-    # Run diff after updating dropdowns and list
-    run_diff()
+        # Prepare descriptive labels for diff dropdowns (unfiltered list)
+        # Fix: skip sequences missing 'id' or 'buffer_length'
+        diff_labels = [
+            f"#{seq['id']} - {seq.get('packet_type', 'undefined')} ({seq['buffer_length']} bytes)"
+            for seq in sequences
+            if 'id' in seq and 'buffer_length' in seq
+        ]
+        dpg.configure_item("diff_source_1_dropdown", items=diff_labels)
+        dpg.configure_item("diff_source_2_dropdown", items=diff_labels)
+        
+        for seq in filtered_sequences:
+            try:
+                # Create group for each sequence with spacing
+                group_id = dpg.add_group(horizontal=True, parent="sequences_list")
+                
+                # Details button
+                packet_type = seq.get('packet_type', 'undefined')
+                label = f"#{seq['id']} - {packet_type} - {seq['function_name']} ({seq['buffer_length']} bytes)"
+                btn_id = dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, width=300, parent=group_id)
+        
+                # Add right-click popup for diff options
+                popup_id = dpg.add_popup(parent=btn_id, mousebutton=dpg.mvMouseButton_Right)
+                dpg.add_menu_item(label="Send to Diff Pane 1", callback=lambda s, a, u=seq['id']: send_to_diff_pane_1(u), parent=popup_id)
+                dpg.add_menu_item(label="Send to Diff Pane 2", callback=lambda s, a, u=seq['id']: send_to_diff_pane_2(u), parent=popup_id)
+                
+                # Remove button with red tint
+                delete_btn = dpg.add_button(label="Delete", callback=remove_sequence, user_data=seq['id'], width=50, parent=group_id)
+                dpg.bind_item_theme(delete_btn, "delete_button_theme")
+            except Exception as e:
+                print(f"Error adding sequence {seq.get('id', 'unknown')}: {e}")
+        
+        # Run diff after updating dropdowns and list
+        run_diff()
+    except Exception as e:
+        print(f"Error updating sequences list: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def show_sequence_details(sender, app_data, user_data):
     """Show details of selected sequence"""
@@ -288,89 +307,112 @@ def show_sequence_details(sender, app_data, user_data):
 
 def create_packet_type(sender, app_data):
     """Create a new packet type from form data"""
-    name = dpg.get_value("type_name_input").strip()
-    description = dpg.get_value("type_description_input").strip()
-    hex_value = dpg.get_value("type_hex_value_input").strip()
-    hex_offset = dpg.get_value("type_hex_offset_input")
-    packet_size = dpg.get_value("type_size_input")
-    callstack = dpg.get_value("type_callstack_input").strip()
+    try:
+        name = dpg.get_value("type_name_input").strip()
+        description = dpg.get_value("type_description_input").strip()
+        hex_value = dpg.get_value("type_hex_value_input").strip()
+        hex_offset = dpg.get_value("type_hex_offset_input")
+        packet_size = dpg.get_value("type_size_input")
+        callstack = dpg.get_value("type_callstack_input").strip()
 
-    if not name:
-        return
+        if not name:
+            return
 
-    # Create criteria object
-    criteria = PacketTypeCriteria(
-        hex_value=hex_value if hex_value else None,
-        hex_offset=hex_offset if hex_offset != 0 else None,
-        packet_size=packet_size if packet_size != 0 else None,
-        callstack=callstack if callstack else None
-    )
+        # Create criteria object
+        criteria = PacketTypeCriteria(
+            hex_value=hex_value if hex_value else None,
+            hex_offset=hex_offset if hex_offset != 0 else None,
+            packet_size=packet_size if packet_size != 0 else None,
+            callstack=callstack if callstack else None
+        )
 
-    # Create the type
-    if packet_type_manager.create_type(name, description, criteria):
-        # Clear form
-        dpg.set_value("type_name_input", "")
-        dpg.set_value("type_description_input", "")
-        dpg.set_value("type_hex_value_input", "")
-        dpg.set_value("type_hex_offset_input", 0)
-        dpg.set_value("type_size_input", 0)
-        dpg.set_value("type_callstack_input", "")
-        
-        # Update existing sequences with the new type
-        update_existing_sequences_types()
-        
-        # Update UI
-        update_packet_types_list()
-        update_sequences_list()
+        # Create the type
+        if packet_type_manager.create_type(name, description, criteria):
+            # Clear form
+            dpg.set_value("type_name_input", "")
+            dpg.set_value("type_description_input", "")
+            dpg.set_value("type_hex_value_input", "")
+            dpg.set_value("type_hex_offset_input", 0)
+            dpg.set_value("type_size_input", 0)
+            dpg.set_value("type_callstack_input", "")
+            
+            # Update existing sequences with the new type
+            update_existing_sequences_types()
+            
+            # Update UI
+            update_packet_types_list()
+            update_sequences_list()
+    except Exception as e:
+        print(f"Error creating packet type: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def delete_packet_type(sender, app_data, user_data):
     """Delete a packet type"""
-    type_name = user_data
-    if packet_type_manager.delete_type(type_name):
-        # Update existing sequences after type deletion
-        update_existing_sequences_types()
-        
-        # Update UI
-        update_packet_types_list()
-        update_sequences_list()
+    try:
+        type_name = user_data
+        if packet_type_manager.delete_type(type_name):
+            # Update existing sequences after type deletion
+            update_existing_sequences_types()
+            
+            # Update UI
+            update_packet_types_list()
+            update_sequences_list()
+    except Exception as e:
+        print(f"Error deleting packet type: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def update_packet_types_list():
     """Update the packet types list in the UI and packet type management buttons"""
-    # Update packet types list
-    dpg.delete_item("packet_types_list", children_only=True)
-    
-    for type_data in packet_type_manager.types:
-        with dpg.group(horizontal=True, parent="packet_types_list"):
-            dpg.add_text(type_data['name'])
-            dpg.add_button(label="Delete", callback=delete_packet_type, user_data=type_data['name'])
+    try:
+        # Update packet types list
+        dpg.delete_item("packet_types_list", children_only=True)
+        
+        for type_data in packet_type_manager.types:
+            try:
+                # Create group for each type
+                group_id = dpg.add_group(horizontal=True, parent="packet_types_list")
+                dpg.add_text(type_data['name'], parent=group_id)
+                dpg.add_button(label="Delete", callback=delete_packet_type, user_data=type_data['name'], parent=group_id)
+                
+                # Add description text
+                desc = f"Description: {type_data['description']}\n"
+                criteria = type_data['criteria']
+                if criteria['hex_value']:
+                    desc += f"Hex Value: {criteria['hex_value']}"
+                    if criteria['hex_offset'] is not None:
+                        desc += f" at offset {criteria['hex_offset']}"
+                    desc += "\n"
+                if criteria['packet_size'] is not None:
+                    desc += f"Packet Size: {criteria['packet_size']}\n"
+                if criteria['callstack']:
+                    desc += f"Callstack: {criteria['callstack']}\n"
+                    
+                dpg.add_text(desc, parent="packet_types_list")
+                dpg.add_separator(parent="packet_types_list")
+            except Exception as e:
+                print(f"Error adding packet type {type_data.get('name', 'unknown')}: {e}")
+        
+        # Update packet type management buttons
+        try:
+            if dpg.does_item_exist("type_management_buttons"):
+                dpg.delete_item("type_management_buttons")
             
-        desc = f"Description: {type_data['description']}\n"
-        criteria = type_data['criteria']
-        if criteria['hex_value']:
-            desc += f"Hex Value: {criteria['hex_value']}"
-            if criteria['hex_offset'] is not None:
-                desc += f" at offset {criteria['hex_offset']}"
-            desc += "\n"
-        if criteria['packet_size'] is not None:
-            desc += f"Packet Size: {criteria['packet_size']}\n"
-        if criteria['callstack']:
-            desc += f"Callstack: {criteria['callstack']}\n"
-            
-        dpg.add_text(desc, parent="packet_types_list")
-        dpg.add_separator(parent="packet_types_list")
-    
-    # Update packet type management buttons
-    if dpg.does_item_exist("type_management_buttons"):
-        dpg.delete_item("type_management_buttons")
-    
-    dpg.add_group(horizontal=True, tag="type_management_buttons", parent="sequence_details_group")
-    dpg.add_button(label="Remove Type", callback=remove_packet_type, tag="remove_type_button",
-                  enabled=False, parent="type_management_buttons")
-    dpg.add_text("Assign Type:", parent="type_management_buttons")
-    for type_data in packet_type_manager.types:
-        dpg.add_button(label=type_data['name'], callback=assign_packet_type,
-                    tag=f"assign_type_{type_data['name']}", enabled=False,
-                    parent="type_management_buttons")
+            buttons_group = dpg.add_group(horizontal=True, tag="type_management_buttons", parent="sequence_details_group")
+            dpg.add_button(label="Remove Type", callback=remove_packet_type, tag="remove_type_button",
+                        enabled=False, parent=buttons_group)
+            dpg.add_text("Assign Type:", parent=buttons_group)
+            for type_data in packet_type_manager.types:
+                dpg.add_button(label=type_data['name'], callback=assign_packet_type,
+                            tag=f"assign_type_{type_data['name']}", enabled=False,
+                            parent=buttons_group)
+        except Exception as e:
+            print(f"Error updating packet type management buttons: {e}")
+    except Exception as e:
+        print(f"Error updating packet types list: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def assign_packet_type(sender, app_data, user_data):
     """Assign a packet type to the current sequence"""
@@ -422,23 +464,32 @@ def update_sequence_regions(sequence_id, regions):
             ]
             save_sequences()
             break
-            break
 
 def remove_sequence(sender, app_data, user_data):
     """Remove a single sequence by its ID"""
-    global sequences
-    sequences = [seq for seq in sequences if seq['id'] != user_data]
-    save_sequences()
-    update_sequences_list()
+    try:
+        global sequences
+        sequences = [seq for seq in sequences if seq['id'] != user_data]
+        save_sequences()
+        update_sequences_list()
+    except Exception as e:
+        print(f"Error removing sequence: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def clear_filtered_sequences(sender, app_data):
     """Remove all sequences that match the current filters"""
-    global sequences
-    filtered = apply_filters(sequences)
-    filtered_ids = {seq['id'] for seq in filtered}
-    sequences = [seq for seq in sequences if seq['id'] not in filtered_ids]
-    save_sequences()
-    update_sequences_list()
+    try:
+        global sequences
+        filtered = apply_filters(sequences)
+        filtered_ids = {seq['id'] for seq in filtered}
+        sequences = [seq for seq in sequences if seq['id'] not in filtered_ids]
+        save_sequences()
+        update_sequences_list()
+    except Exception as e:
+        print(f"Error clearing filtered sequences: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def select_diff_algorithm(sender, app_data, user_data):
     """Callback when diff algorithm is selected.
