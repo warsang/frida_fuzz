@@ -47,7 +47,8 @@ class HexdumpWidget:
                  marker_editor_window_tag: str = "marker_editor_window", # NEW parameter
                  marker_editor_tag_suffix: str = "", # NEW parameter
                  on_send_to_diff_1=None,
-                 on_send_to_diff_2=None):
+                 on_send_to_diff_2=None,
+                 on_data_changed=None):  # Added parameter for Repeater tab
         """Initialize the hexdump widget with default size."""
         self.tag = tag
         self.width = width
@@ -77,6 +78,7 @@ class HexdumpWidget:
         self.on_send_to_diff_1 = on_send_to_diff_1
         self.on_send_to_diff_2 = on_send_to_diff_2
         self.on_regions_changed = on_regions_changed # Callback for when markers change (might need adjustment for KSY)
+        self.on_data_changed = on_data_changed # Callback for when hex data changes
         self.options = HexdumpOptions()
         # Mapping of byte offset to RGBA color for diff highlighting
         self.diff_highlights: Dict[int, Tuple[int, int, int, int]] = {}

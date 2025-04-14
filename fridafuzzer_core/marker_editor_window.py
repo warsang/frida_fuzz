@@ -29,7 +29,9 @@ class MarkerEditorWindow:
         self.related_marker_dropdown_tag = prefix + "marker_related_dropdown"
         self.current_marker = None
 
-        with dpg.window(label="Marker Editor", show=False, width=400, height=600, tag=tag) as self.window_id:
+        # Ensure unique tag by appending tag_suffix
+        window_tag = f"{tag}{tag_suffix}"
+        with dpg.window(label="Marker Editor", show=False, width=400, height=600, tag=window_tag) as self.window_id:
             # Group: Marker Basic Info
             with dpg.group():
                 dpg.add_text("Marker Name:")

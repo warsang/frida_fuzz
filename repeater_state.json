@@ -1,0 +1,14 @@
+{
+  "packets": {},
+  "sequences": {},
+  "connection_mode": "direct",
+  "connection_params": {
+    "host": "",
+    "port": 0,
+    "protocol": "TCP",
+    "timeout": 5.0,
+    "custom_params": {}
+  },
+  "current_packet_id": null,
+  "current_sequence_id": null
+}
