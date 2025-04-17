@@ -267,10 +267,13 @@ def update_sequences_list():
                 btn_id = dpg.add_button(label=label, callback=show_sequence_details, user_data=seq, width=300, parent=group_id)
         
                 # Add right-click popup for diff options
-                popup_id = dpg.add_popup(parent=btn_id, mousebutton=dpg.mvMouseButton_Right)
-                dpg.add_menu_item(label="Send to Diff Pane 1", callback=lambda s, a, u=seq['id']: send_to_diff_pane_1(u), parent=popup_id)
-                dpg.add_menu_item(label="Send to Diff Pane 2", callback=lambda s, a, u=seq['id']: send_to_diff_pane_2(u), parent=popup_id)
-                dpg.add_menu_item(label="Send to Repeater", callback=lambda s, a, u=seq['id']: send_to_repeater(u), parent=popup_id)
+                # Store the sequence ID in a local variable to ensure it's properly captured by the lambda
+                seq_id = seq['id']
+                with dpg.popup(btn_id, mousebutton=dpg.mvMouseButton_Right):
+                    dpg.add_menu_item(label="Send to Diff Pane 1", callback=lambda s, a, u=seq_id: send_to_diff_pane_1(u))
+                    dpg.add_menu_item(label="Send to Diff Pane 2", callback=lambda s, a, u=seq_id: send_to_diff_pane_2(u))
+                    dpg.add_menu_item(label="Send to Repeater", callback=lambda s, a, u=seq_id: send_to_repeater(u))
+                    dpg.add_menu_item(label="Send Filtered to Repeater", callback=lambda s, a: send_filtered_to_repeater())
                 
                 # Remove button with red tint
                 delete_btn = dpg.add_button(label="Delete", callback=remove_sequence, user_data=seq['id'], width=50, parent=group_id)
@@ -532,6 +535,61 @@ def clear_filtered_sequences(sender, app_data):
         print(traceback.format_exc())
 
 # --- Repeater Tab Core Functionality ---
+
+def send_filtered_to_repeater():
+    """
+    Send all currently filtered packets to the Repeater tab as a new sequence.
+    
+    This function:
+    1. Gets all currently filtered packets
+    2. Creates a new repeater sequence
+    3. Adds all filtered packets to this sequence
+    
+    Returns:
+        str: ID of the new RepeaterSequence or None if failed
+    """
+    global repeater_sequences, repeater_packets
+    
+    # Get all currently filtered packets
+    filtered_packets = apply_filters(sequences)
+    
+    if not filtered_packets:
+        print("No filtered packets to send to Repeater")
+        return None
+    
+    # Generate a unique ID for the repeater sequence
+    repeater_sequence_id = str(uuid.uuid4())
+    
+    # Create a new sequence
+    current_time = time.time()
+    repeater_sequence = RepeaterSequence(
+        id=repeater_sequence_id,
+        name=f"Filtered Sequence {len(repeater_sequences) + 1}",
+        packet_ids=[],
+        created_at=current_time,
+        last_replayed_at=0  # Never replayed yet
+    )
+    
+    # Add each filtered packet to the repeater
+    for packet in filtered_packets:
+        # Create a repeater packet for each filtered packet
+        repeater_packet_id = send_to_repeater(packet['id'])
+        if repeater_packet_id:
+            # Update the sequence_id of the repeater packet
+            repeater_packets[repeater_packet_id].sequence_id = repeater_sequence_id
+            # Add the packet ID to the sequence
+            repeater_sequence.packet_ids.append(repeater_packet_id)
+    
+    # Add the sequence to the repeater sequences dictionary
+    repeater_sequences[repeater_sequence_id] = repeater_sequence
+    
+    # Save repeater state
+    save_repeater_state()
+    
+    # Update the UI
+    update_repeater_ui()
+    
+    return repeater_sequence_id
 
 def send_to_repeater(packet_id):
     """

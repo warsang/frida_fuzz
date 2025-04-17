@@ -1,6 +1,216 @@
 {
-  "packets": {},
-  "sequences": {},
+  "packets": {
+    "b1840072-6dad-47c5-bdc3-0f0ccd88d439": {
+      "id": "b1840072-6dad-47c5-bdc3-0f0ccd88d439",
+      "original_id": "269",
+      "sequence_id": "8eaaf7d1-8a20-4812-b05e-427268e3510b",
+      "hex_data": "0a206cb05df63412",
+      "modified_hex_data": "0a206cb05df63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 12944,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff7c4293562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff7c32e5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
+          "0x7ff7c32e92be -> google::protobuf::Message::GetReflection",
+          "0x7ff7c1bcc88e -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c1b4acf0 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c13b9a7b -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c1345c60 -> google::protobuf::util::converter::DefaultValueObjectWriter::current",
+          "0x7ff7c11ab1e2 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff7c17db3ac -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c05b4145 -> google::protobuf::FileDescriptorSet::file",
+          "0x7ff7c04db09c -> google::protobuf::EnumDescriptor::is_placeholder",
+          "0x7ff7c32e799f -> google::protobuf::RepeatedField<unsigned int>::rend",
+          "0x7ff7c05478b5 -> google::protobuf::Enum::options",
+          "0x7ff7c3e9097c -> google::protobuf::FileDescriptorProto::mutable_extension",
+          "0x7ff7c3e97f62 -> google::protobuf::FileDescriptorProto::mutable_extension",
+          "0x7ff7c6188274 -> google::protobuf::NullValue_IsValid"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1744677494.3813462,
+      "last_edited_at": 1744677494.3813462,
+      "replay_history": []
+    },
+    "2949d499-610a-4364-9f6b-6c0de13a919d": {
+      "id": "2949d499-610a-4364-9f6b-6c0de13a919d",
+      "original_id": "279",
+      "sequence_id": "8eaaf7d1-8a20-4812-b05e-427268e3510b",
+      "hex_data": "98206cb061f634121a644d7a49785155497851544574526a6b34526930304f4463774c554578513059744e55597a4d544d784d4556474e5449784f6a5931516b55324e3052454c546b324f4467744e444a43517931424e4551774c5442424d554e444e6a5134516a63314f41413d2202656e322434363538444231332d343233382d313132432d344439392d3745414342383737463533313801",
+      "modified_hex_data": "98206cb061f634121a644d7a49785155497851544574526a6b34526930304f4463774c554578513059744e55597a4d544d784d4556474e5449784f6a5931516b55324e3052454c546b324f4467744e444a43517931424e4551774c5442424d554e444e6a5134516a63314f41413d2202656e322434363538444231332d343233382d313132432d344439392d3745414342383737463533313801",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 12944,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 154,
+        "flags": 0,
+        "packet_type": "size_154_protobuf",
+        "backtrace": [
+          "0x7ff7c4293562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff7c32e5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
+          "0x7ff7c32e92be -> google::protobuf::Message::GetReflection",
+          "0x7ff7c1bb4768 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c1b4bee8 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c13c4201 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c17c7ede -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c17771e2 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c1784a68 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c0536702 -> google::protobuf::MapValueConstRef::MapValueConstRef",
+          "0x7ff7c04fdfc9 -> google::protobuf::internal::ArenaStringPtr::ArenaStringPtr",
+          "0x7ff7c3e96e7b -> google::protobuf::FileDescriptorProto::mutable_extension",
+          "0x7ff7c33967bb -> google::protobuf::Message::GetReflection",
+          "0x7ff7c339e44c -> google::protobuf::Message::GetReflection",
+          "0x7ff7c339e51a -> google::protobuf::Message::GetReflection",
+          "0x7ff7c339ffdc -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1744677494.3849947,
+      "last_edited_at": 1744677494.3849947,
+      "replay_history": []
+    },
+    "ad5ffaa2-5a6a-4e99-b1be-53f19f06d685": {
+      "id": "ad5ffaa2-5a6a-4e99-b1be-53f19f06d685",
+      "original_id": "285",
+      "sequence_id": "8eaaf7d1-8a20-4812-b05e-427268e3510b",
+      "hex_data": "0a206cb035f63412",
+      "modified_hex_data": "0a206cb035f63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 12944,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff7c4293562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff7c32e5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
+          "0x7ff7c32e92be -> google::protobuf::Message::GetReflection",
+          "0x7ff7c1bcc50e -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c1b4a9e0 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c13a568a -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c139e003 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c1161068 -> google::protobuf::io::CodedInputStream::GetExtensionFactory",
+          "0x7ff7c11ab1e2 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff7c1b4a94c -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c1b4a7ce -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c32ed31a -> google::protobuf::Message::GetReflection",
+          "0x7ff7c17d9e45 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c1865a07 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c19260c7 -> google::protobuf::BoolValue::clear_value",
+          "0x7ff7c315dde1 -> google::protobuf::strings::ArrayByteSource::Peek"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1744677494.3883939,
+      "last_edited_at": 1744677494.3883939,
+      "replay_history": []
+    },
+    "2d9089ea-b87a-40f6-a342-1927b9832a05": {
+      "id": "2d9089ea-b87a-40f6-a342-1927b9832a05",
+      "original_id": "291",
+      "sequence_id": "8eaaf7d1-8a20-4812-b05e-427268e3510b",
+      "hex_data": "0a206cb028f63412",
+      "modified_hex_data": "0a206cb028f63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 12944,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff7c4293562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff7c32e5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
+          "0x7ff7c32e92be -> google::protobuf::Message::GetReflection",
+          "0x7ff7c1b4ab11 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c13a6f24 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c13a57a5 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c139e003 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c1161068 -> google::protobuf::io::CodedInputStream::GetExtensionFactory",
+          "0x7ff7c11ab1e2 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff7c1b3f4cc -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c1b3f06e -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c32ed31a -> google::protobuf::Message::GetReflection",
+          "0x7ff7c17d9e45 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c1865a07 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c19260c7 -> google::protobuf::BoolValue::clear_value",
+          "0x7ff7c315dde1 -> google::protobuf::strings::ArrayByteSource::Peek"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1744677494.3928952,
+      "last_edited_at": 1744677494.3928952,
+      "replay_history": []
+    },
+    "4819048b-b439-436d-8463-e116261a2812": {
+      "id": "4819048b-b439-436d-8463-e116261a2812",
+      "original_id": "293",
+      "sequence_id": "8eaaf7d1-8a20-4812-b05e-427268e3510b",
+      "hex_data": "0a206cb05af63412",
+      "modified_hex_data": "0a206cb05af63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 12944,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff7c4293562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff7c32e5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
+          "0x7ff7c32e92be -> google::protobuf::Message::GetReflection",
+          "0x7ff7c1bcc6ce -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c1b4ac20 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c13a592a -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c139e003 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff7c1161068 -> google::protobuf::io::CodedInputStream::GetExtensionFactory",
+          "0x7ff7c11ab1e2 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff7c1b3fd92 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c1b3fbee -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff7c32ed31a -> google::protobuf::Message::GetReflection",
+          "0x7ff7c17d9e45 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c1865a07 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7c19260c7 -> google::protobuf::BoolValue::clear_value",
+          "0x7ff7c315dde1 -> google::protobuf::strings::ArrayByteSource::Peek"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1744677494.397394,
+      "last_edited_at": 1744677494.397394,
+      "replay_history": []
+    }
+  },
+  "sequences": {
+    "8eaaf7d1-8a20-4812-b05e-427268e3510b": {
+      "id": "8eaaf7d1-8a20-4812-b05e-427268e3510b",
+      "name": "Filtered Sequence 1",
+      "packet_ids": [
+        "b1840072-6dad-47c5-bdc3-0f0ccd88d439",
+        "2949d499-610a-4364-9f6b-6c0de13a919d",
+        "ad5ffaa2-5a6a-4e99-b1be-53f19f06d685",
+        "2d9089ea-b87a-40f6-a342-1927b9832a05",
+        "4819048b-b439-436d-8463-e116261a2812"
+      ],
+      "created_at": 1744677494.3808832,
+      "last_replayed_at": 1744677566.4854028
+    }
+  },
   "connection_mode": "direct",
   "connection_params": {
     "host": "",
@@ -9,6 +219,6 @@
     "timeout": 5.0,
     "custom_params": {}
   },
-  "current_packet_id": null,
-  "current_sequence_id": null
+  "current_packet_id": "ad5ffaa2-5a6a-4e99-b1be-53f19f06d685",
+  "current_sequence_id": "8eaaf7d1-8a20-4812-b05e-427268e3510b"
 }
