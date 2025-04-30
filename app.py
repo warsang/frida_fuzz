@@ -795,6 +795,11 @@ def replay_packet_direct(packet_id, connection_params):
     try:
         # Get the hex data to send (use modified if available)
         hex_data = packet.modified_hex_data if packet.is_modified else packet.hex_data
+        
+        # Convert hex_data to string if it's bytes
+        if isinstance(hex_data, bytes):
+            hex_data = hex_data.hex()
+            
         data = bytes.fromhex(hex_data)
         
         # Extract connection parameters
@@ -853,7 +858,7 @@ def replay_packet_direct(packet_id, connection_params):
                 "host": host,
                 "port": port,
                 "success": True,
-                "response": response.hex() if response else None
+                "response": response.hex() if response and isinstance(response, bytes) else response
             }
             packet.replay_history.append(replay_record)
             
@@ -970,17 +975,35 @@ def save_repeater_state():
         # Convert RepeaterPacket objects to dictionaries
         packets_dict = {}
         for packet_id, packet in repeater_packets.items():
+            # Ensure hex_data and modified_hex_data are strings
+            hex_data = packet.hex_data
+            if isinstance(hex_data, bytes):
+                hex_data = hex_data.hex()
+                
+            modified_hex_data = packet.modified_hex_data
+            if isinstance(modified_hex_data, bytes):
+                modified_hex_data = modified_hex_data.hex()
+            
+            # Process replay history to ensure all bytes are converted to strings
+            processed_history = []
+            for entry in packet.replay_history:
+                processed_entry = entry.copy()
+                # Convert response to hex string if it's bytes
+                if 'response' in processed_entry and isinstance(processed_entry['response'], bytes):
+                    processed_entry['response'] = processed_entry['response'].hex()
+                processed_history.append(processed_entry)
+            
             packets_dict[packet_id] = {
                 "id": packet.id,
                 "original_id": packet.original_id,
                 "sequence_id": packet.sequence_id,
-                "hex_data": packet.hex_data,
-                "modified_hex_data": packet.modified_hex_data,
+                "hex_data": hex_data,
+                "modified_hex_data": modified_hex_data,
                 "metadata": packet.metadata,
                 "is_modified": packet.is_modified,
                 "created_at": packet.created_at,
                 "last_edited_at": packet.last_edited_at,
-                "replay_history": packet.replay_history
+                "replay_history": processed_history
             }
         
         # Convert RepeaterSequence objects to dictionaries
@@ -1812,6 +1835,12 @@ def replay_current_repeater_packet():
     if repeater_connection_mode == "frida":
         success = replay_packet_frida(current_repeater_packet_id)
     else:
+        # Validate connection parameters before direct replay
+        if not repeater_connection_params.get("host") or not repeater_connection_params.get("port"):
+            print("Please set valid host and port in connection settings before replaying")
+            # Show a message to the user
+            dpg.set_value("status_text", "Error: Please set valid host and port in connection settings")
+            return
         success = replay_packet_direct(current_repeater_packet_id, repeater_connection_params)
     
     # Update UI after replay
@@ -1829,6 +1858,12 @@ def replay_current_repeater_sequence():
     if repeater_connection_mode == "frida":
         success = replay_sequence_frida(current_repeater_sequence_id)
     else:
+        # Validate connection parameters before direct replay
+        if not repeater_connection_params.get("host") or not repeater_connection_params.get("port"):
+            print("Please set valid host and port in connection settings before replaying")
+            # Show a message to the user
+            dpg.set_value("status_text", "Error: Please set valid host and port in connection settings")
+            return
         success = replay_sequence_direct(current_repeater_sequence_id, repeater_connection_params)
     
     # Update UI after replay

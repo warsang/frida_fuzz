@@ -24,8 +24,9 @@ Wavefront Alignment is a modern, high-performance algorithm that uses a wavefron
 - Supports affine gap penalties (different costs for opening vs. extending gaps)
 
 **Implementation Details:**
-- Requires the external `wfa2` Python package
-- Handles binary data by encoding as Latin-1 strings for compatibility with the WFA2 library
+- Primarily uses the external `pywfa` Python package
+- Falls back to BioPython's `Align.PairwiseAligner` if `pywfa` is not available
+- Handles binary data by encoding as Latin-1 strings for compatibility with the alignment libraries
 - Returns alignment information with indices mapping between the two sequences
 
 ### Needleman-Wunsch
@@ -60,7 +61,7 @@ Smith-Waterman is a variation of the Needleman-Wunsch algorithm that focuses on 
 
 | Algorithm | Best For | Strengths | Limitations |
 |-----------|----------|-----------|-------------|
-| **Wavefront Alignment** | Large sequences with high similarity | - Fastest for similar sequences<br>- Memory efficient<br>- Supports affine gap penalties | - Requires external package<br>- Less intuitive parameters<br>- Limited to 20,000 bytes |
+| **Wavefront Alignment** | Large sequences with high similarity | - Fastest for similar sequences<br>- Memory efficient<br>- Supports affine gap penalties<br>- Has fallback implementation | - Less intuitive parameters<br>- Limited to 20,000 bytes |
 | **Needleman-Wunsch** | Complete protocol packet comparison | - Guarantees optimal global alignment<br>- Simple parameters<br>- Good for understanding overall structure | - Slower for large sequences<br>- Limited to 10,000 bytes<br>- Less effective for finding local similarities |
 | **Smith-Waterman** | Finding common regions in different packets | - Excellent at identifying similar regions<br>- Ignores unrelated sections<br>- Good for protocol field identification | - Slower for large sequences<br>- Limited to 10,000 bytes<br>- May miss global structural similarities |
 
@@ -262,6 +263,22 @@ aligned1 = [idx1 for idx1, idx2 in aligned_indices]
 aligned2 = [idx2 for idx1, idx2 in aligned_indices]
 visualization = visualize_alignment(bytes_sequence_1, bytes_sequence_2, aligned1, aligned2)
 print(visualization)
+
+# Using the generic align function with different methods
+from fridafuzzer_core.biodiff_algorithms import align
+result = align(bytes_sequence_1, bytes_sequence_2, method="wfa2")
 ```
 
 This API allows for integration of these powerful algorithms into custom analysis scripts and workflows.
+
+### Fallback Implementation
+
+The Wavefront Alignment algorithm has a fallback implementation using BioPython's `Align.PairwiseAligner` when the `pywfa` package is not available. This ensures that the functionality remains available even if there are installation issues with the `pywfa` package.
+
+To use the fallback implementation:
+
+1. Ensure BioPython is installed: `pip install biopython`
+2. The system will automatically use BioPython if `pywfa` is not available
+3. The API and results remain consistent regardless of which implementation is used
+
+This dual implementation approach provides maximum compatibility across different environments and platforms.

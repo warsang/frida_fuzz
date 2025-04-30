@@ -225,6 +225,7 @@ class HexdumpWidget:
                 dpg.add_separator()
                 dpg.add_menu_item(label="Copy Selection", callback=self._copy_selection)
                 dpg.add_menu_item(label="Copy as Hex", callback=self._copy_as_hex)
+                dpg.add_menu_item(label="Modify Selected Bytes", callback=self._modify_selected_bytes, tag=f"{self.tag}_modify_bytes_menu")
                 dpg.add_separator()
                 # Add analysis menu items with unique tags
                 self.entropy_menu_tag = f"{self.tag}_entropy_menu_{dpg.generate_uuid()}"
@@ -495,6 +496,14 @@ class HexdumpWidget:
         has_field = field_info is not None
         dpg.configure_item(f"{self.tag}_modify_ksy_field", enabled=has_field)
         dpg.configure_item(f"{self.tag}_remove_ksy_field", enabled=has_field)
+        
+        # Enable/disable Modify Selected Bytes menu item based on selection
+        has_selection = self.current_selection is not None
+        dpg.configure_item(f"{self.tag}_modify_bytes_menu", enabled=has_selection)
+        
+        # Enable/disable Modify Selected Bytes menu item based on selection
+        has_selection = self.current_selection is not None
+        dpg.configure_item(f"{self.tag}_modify_bytes_menu", enabled=has_selection)
 
         # Handle left click for selection
         if dpg.is_mouse_button_down(dpg.mvMouseButton_Left):
@@ -556,6 +565,19 @@ class HexdumpWidget:
         if hasattr(self, 'frequency_menu_tag') and dpg.does_item_exist(self.frequency_menu_tag):
             dpg.configure_item(
                 self.frequency_menu_tag,
+                enabled=self.current_selection is not None
+            )
+            
+        # Update modify bytes menu item
+        if dpg.does_item_exist(f"{self.tag}_modify_bytes_menu"):
+            dpg.configure_item(
+                f"{self.tag}_modify_bytes_menu",
+                enabled=self.current_selection is not None
+            )
+        # Update modify bytes menu item
+        if dpg.does_item_exist(f"{self.tag}_modify_bytes_menu"):
+            dpg.configure_item(
+                f"{self.tag}_modify_bytes_menu",
                 enabled=self.current_selection is not None
             )
 
@@ -780,6 +802,114 @@ class HexdumpWidget:
         """Copy selected bytes as hex string."""
         if self.current_selection:
             start = min(self.current_selection.start_offset, self.current_selection.end_offset)
+            end = max(self.current_selection.start_offset, self.current_selection.end_offset)
+            selected = self.data[start:end + 1]
+            hex_str = selected.hex()
+            if self.options.uppercase_hex:
+                hex_str = hex_str.upper()
+            dpg.set_clipboard_text(hex_str)
+            
+    def _modify_selected_bytes(self):
+        """Open a modal dialog to modify selected bytes."""
+        if not self.current_selection:
+            return
+            
+        # Get start and end offsets, ensuring start <= end
+        start = min(self.current_selection.start_offset, self.current_selection.end_offset)
+        end = max(self.current_selection.start_offset, self.current_selection.end_offset)
+        
+        # Get the selected bytes
+        selected_bytes = self.data[start:end + 1]
+        
+        # Create a unique tag for the modal
+        modal_tag = f"{self.tag}_modify_bytes_modal"
+        
+        # Delete the modal if it already exists
+        if dpg.does_item_exist(modal_tag):
+            dpg.delete_item(modal_tag)
+        
+        # Create the modal dialog
+        with dpg.window(label="Modify Selected Bytes", tag=modal_tag, width=400, height=200, modal=True):
+            # Display the current hex string
+            hex_str = selected_bytes.hex()
+            if self.options.uppercase_hex:
+                hex_str = hex_str.upper()
+                
+            # Add input text field for editing
+            dpg.add_input_text(
+                label="Hex Value",
+                default_value=hex_str,
+                tag=f"{modal_tag}_input",
+                width=-1
+            )
+            
+            # Add error text area
+            dpg.add_text("", tag=f"{modal_tag}_error", color=(255, 0, 0, 255))
+            
+            # Add buttons
+            with dpg.group(horizontal=True):
+                dpg.add_button(
+                    label="Save",
+                    callback=lambda: self._save_modified_bytes(
+                        start, end, dpg.get_value(f"{modal_tag}_input"), modal_tag
+                    )
+                )
+                dpg.add_button(
+                    label="Cancel",
+                    callback=lambda: dpg.delete_item(modal_tag)
+                )
+    
+    def _save_modified_bytes(self, start_offset, end_offset, hex_string, modal_tag):
+        """Save the modified bytes if validation passes."""
+        # Remove any whitespace
+        hex_string = hex_string.replace(" ", "")
+        
+        # Validate input
+        error_tag = f"{modal_tag}_error"
+        
+        # Check if it contains only valid hex characters
+        if not all(c in "0123456789ABCDEFabcdef" for c in hex_string):
+            dpg.set_value(error_tag, "Error: Input contains non-hexadecimal characters.")
+            return
+            
+        # Check if length is even (two hex chars per byte)
+        if len(hex_string) % 2 != 0:
+            dpg.set_value(error_tag, "Error: Hex string length must be even (two hex chars per byte).")
+            return
+            
+        # Check if the number of bytes matches the original selection
+        original_length = end_offset - start_offset + 1
+        new_length = len(hex_string) // 2
+        if new_length != original_length:
+            dpg.set_value(error_tag, f"Error: Number of bytes must match original selection ({original_length} bytes).")
+            return
+            
+        try:
+            # Convert hex string to bytes
+            new_bytes = bytes.fromhex(hex_string)
+            
+            # Create a mutable copy of the data
+            data_array = bytearray(self.data)
+            
+            # Replace the bytes at the correct offset
+            data_array[start_offset:end_offset + 1] = new_bytes
+            
+            # Update self.data
+            self.data = bytes(data_array)
+            
+            # Notify that data has changed
+            if self.on_data_changed is not None and self.sequence_id is not None:
+                self.on_data_changed(self.sequence_id, self.data)
+                
+            # Update the view
+            self.render()
+            
+            # Close the modal
+            dpg.delete_item(modal_tag)
+            
+        except Exception as e:
+            dpg.set_value(error_tag, f"Error: {str(e)}")
+            
     def _toggle_show_markers(self, value):
         """Toggle marker visibility and re-render."""
         self.show_markers = value
