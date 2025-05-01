@@ -13,6 +13,7 @@
 * Initialized Memory Bank
 * Created comprehensive documentation for biodiff algorithms (2025-04-12)
 * Updated README.md to include biodiff capabilities (2025-04-12)
+* Fixed Frida mode replay error by updating status widget references (2025-04-30)
 
 ## Current Tasks
 

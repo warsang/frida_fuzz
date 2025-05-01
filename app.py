@@ -17,6 +17,9 @@ from fridafuzzer_core.biodiff_algorithms import (
     smith_waterman,
     wavefront_alignment
 )
+# --- Repeater Imports ---
+from fridafuzzer_core.repeater_console_window import RepeaterConsoleWindow, LogLevel
+
 # --- Repeater Data Structures ---
 @dataclass
 class RepeaterPacket:
@@ -68,6 +71,7 @@ repeater_connection_params = {    # Parameters for direct socket connection
     "custom_params": {}
 }
 current_repeater_packet_id = None  # Currently selected packet
+repeater_console_window = None    # Console window for logging
 current_repeater_sequence_id = None  # Currently selected sequence
 diff_hexdump_2 = None
 
@@ -692,6 +696,53 @@ def send_sequence_to_repeater(sequence_id):
     
     return repeater_sequence_id
 
+def parse_socket_info(socket_info_string):
+    """
+    Parse socket information string into host and port.
+    
+    Args:
+        socket_info_string: String in format "IP:PORT" or "[IPv6]:PORT"
+    
+    Returns:
+        tuple: (host, port) or (None, None) if parsing fails
+    """
+    if not socket_info_string:
+        return None, None
+    
+    try:
+        # Handle IPv6 addresses which are enclosed in square brackets
+        if socket_info_string.startswith('['):
+            # Format: [IPv6]:PORT
+            if ']' not in socket_info_string:
+                return None, None
+                
+            # Split at the closing bracket + colon
+            closing_bracket_pos = socket_info_string.find(']')
+            if closing_bracket_pos == -1 or closing_bracket_pos + 1 >= len(socket_info_string) or socket_info_string[closing_bracket_pos + 1] != ':':
+                return None, None
+                
+            host = socket_info_string[:closing_bracket_pos + 1]  # Include the brackets
+            port_str = socket_info_string[closing_bracket_pos + 2:]  # Skip the ']:' part
+            port = int(port_str)
+            return host, port
+        
+        # Handle IPv4 addresses or hostnames
+        elif ':' in socket_info_string:
+            # Format: IP:PORT or hostname:PORT
+            parts = socket_info_string.split(':')
+            if len(parts) != 2:
+                # If there are multiple colons and it's not an IPv6 address, it's invalid
+                return None, None
+                
+            host = parts[0]
+            port = int(parts[1])
+            return host, port
+    
+    except (ValueError, IndexError) as e:
+        print(f"Error parsing socket_info: {e}")
+    
+    return None, None
+
 def replay_packet_frida(packet_id):
     """
     Replay a packet using Frida.
@@ -702,7 +753,7 @@ def replay_packet_frida(packet_id):
     Returns:
         bool: True if successful, False otherwise
     """
-    global repeater_packets
+    global repeater_packets, is_running, frida_handler
     
     # Check if packet exists
     if packet_id not in repeater_packets:
@@ -718,46 +769,83 @@ def replay_packet_frida(packet_id):
         return False
     
     try:
+        # Log the attempt
+        repeater_console_window.add_log(
+            LogLevel.INFO,
+            f"Sending packet via Frida",
+            packet_id=packet_id
+        )
+        
         # Get the hex data to send (use modified if available)
         hex_data = packet.modified_hex_data if packet.is_modified else packet.hex_data
         
-        # Use Frida to send the packet
-        success = frida_handler.send_data(hex_data)
-        
-        if success:
-            # Record the replay in history
-            replay_record = {
-                "timestamp": time.time(),
-                "mode": "frida",
-                "success": True,
-                "response": None  # Frida mode doesn't capture responses
-            }
-            packet.replay_history.append(replay_record)
-            
-            # Update last replayed timestamp
-            packet.last_edited_at = replay_record["timestamp"]
-            
-            # Save state
-            save_repeater_state()
-            
-            return True
-        else:
-            # Record failed replay
-            replay_record = {
-                "timestamp": time.time(),
-                "mode": "frida",
-                "success": False,
-                "error": "Failed to send data through Frida"
-            }
-            packet.replay_history.append(replay_record)
-            save_repeater_state()
-            
+        # Get socket ID from metadata
+        socket_id = packet.metadata.get("socket_id")
+        if not socket_id:
+            print("No socket ID found in packet metadata")
+            repeater_console_window.add_log(
+                LogLevel.ERROR,
+                "No socket ID found in packet metadata",
+                packet_id=packet_id
+            )
             return False
+        
+        # Convert to bytes for sending
+        if isinstance(hex_data, bytes):
+            data = hex_data
+        else:
+            data = bytes.fromhex(hex_data)
+            
+        # Use Frida to send the packet
+        result = frida_handler.replay_packet(socket_id, data)
+        
+        # Process result
+        success = result.get("success", False)
+        
+        # Record the replay in history
+        timestamp = time.time()
+        replay_record = {
+            "timestamp": timestamp,
+            "mode": "frida",
+            "success": success,
+            "error": result.get("error"),
+            "response": result.get("response_hex")
+        }
+        packet.replay_history.append(replay_record)
+        
+        # Update last replayed timestamp
+        packet.last_edited_at = timestamp
+        
+        # Save state
+        save_repeater_state()
+        
+        # Log the result
+        if success:
+            repeater_console_window.add_log(
+                LogLevel.INFO,
+                f"Packet sent successfully via Frida",
+                packet_id=packet_id
+            )
+        else:
+            repeater_console_window.add_log(
+                LogLevel.WARNING,
+                f"Failed to send packet via Frida: {result.get('error', 'Unknown error')}",
+                packet_id=packet_id
+            )
+        
+        return success
     
     except Exception as e:
         print(f"Error replaying packet with Frida: {e}")
         import traceback
         print(traceback.format_exc())
+        
+        # Log the error
+        repeater_console_window.add_log(
+            LogLevel.ERROR,
+            f"Error replaying packet with Frida: {str(e)}",
+            packet_id=packet_id
+        )
         
         # Record error in history
         replay_record = {
@@ -793,14 +881,21 @@ def replay_packet_direct(packet_id, connection_params):
     packet = repeater_packets[packet_id]
     
     try:
+        # Log the attempt
+        repeater_console_window.add_log(
+            LogLevel.INFO,
+            f"Sending packet via direct connection",
+            packet_id=packet_id
+        )
+        
         # Get the hex data to send (use modified if available)
         hex_data = packet.modified_hex_data if packet.is_modified else packet.hex_data
         
-        # Convert hex_data to string if it's bytes
+        # Convert to bytes for sending
         if isinstance(hex_data, bytes):
-            hex_data = hex_data.hex()
-            
-        data = bytes.fromhex(hex_data)
+            data = hex_data
+        else:
+            data = bytes.fromhex(hex_data)
         
         # Extract connection parameters
         host = connection_params.get("host", "")
@@ -808,9 +903,20 @@ def replay_packet_direct(packet_id, connection_params):
         protocol = connection_params.get("protocol", "TCP")
         timeout = connection_params.get("timeout", 5.0)
         
+        # If host/port not provided, try to parse from socket_info
         if not host or not port:
-            print("Invalid connection parameters: host and port are required")
-            return False
+            socket_info = packet.metadata.get("socket_info", "")
+            if socket_info:
+                host, port = parse_socket_info(socket_info)
+                
+            if not host or not port:
+                print("Invalid connection parameters: host and port are required")
+                repeater_console_window.add_log(
+                    LogLevel.ERROR,
+                    "Invalid connection parameters: host and port are required",
+                    packet_id=packet_id
+                )
+                return False
         
         # Create socket based on protocol
         if protocol.upper() == "TCP":
@@ -819,12 +925,18 @@ def replay_packet_direct(packet_id, connection_params):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         else:
             print(f"Unsupported protocol: {protocol}")
+            repeater_console_window.add_log(
+                LogLevel.ERROR,
+                f"Unsupported protocol: {protocol}",
+                packet_id=packet_id
+            )
             return False
         
         # Set timeout
         sock.settimeout(timeout)
         
         response = None
+        timestamp = time.time()
         
         try:
             # Connect and send data for TCP
@@ -832,12 +944,22 @@ def replay_packet_direct(packet_id, connection_params):
                 sock.connect((host, port))
                 sock.sendall(data)
                 
-                # Try to receive response
-                try:
-                    response = sock.recv(4096)
-                except socket.timeout:
-                    # No response within timeout is not an error
-                    pass
+                # Try to receive response with timeout
+                response_chunks = []
+                start_time = time.time()
+                
+                while time.time() - start_time < timeout:
+                    try:
+                        chunk = sock.recv(4096)
+                        if not chunk:  # Connection closed
+                            break
+                        response_chunks.append(chunk)
+                    except socket.timeout:
+                        # No more data available
+                        break
+                
+                if response_chunks:
+                    response = b''.join(response_chunks)
             
             # Send data for UDP
             elif protocol.upper() == "UDP":
@@ -852,21 +974,30 @@ def replay_packet_direct(packet_id, connection_params):
             
             # Record successful replay in history
             replay_record = {
-                "timestamp": time.time(),
+                "timestamp": timestamp,
                 "mode": "direct",
                 "protocol": protocol,
                 "host": host,
                 "port": port,
                 "success": True,
-                "response": response.hex() if response and isinstance(response, bytes) else response
+                "response": response.hex() if response and isinstance(response, bytes) else None,
+                "response_hex": response.hex() if response and isinstance(response, bytes) else None
             }
             packet.replay_history.append(replay_record)
             
             # Update last replayed timestamp
-            packet.last_edited_at = replay_record["timestamp"]
+            packet.last_edited_at = timestamp
             
             # Save state
             save_repeater_state()
+            
+            # Log the success
+            response_size = len(response) if response else 0
+            repeater_console_window.add_log(
+                LogLevel.INFO,
+                f"Packet sent successfully via {protocol}. Response size: {response_size} bytes",
+                packet_id=packet_id
+            )
             
             return True
             
@@ -878,6 +1009,13 @@ def replay_packet_direct(packet_id, connection_params):
         print(f"Error replaying packet with direct connection: {e}")
         import traceback
         print(traceback.format_exc())
+        
+        # Log the error
+        repeater_console_window.add_log(
+            LogLevel.ERROR,
+            f"Error replaying packet with direct connection: {str(e)}",
+            packet_id=packet_id
+        )
         
         # Record error in history
         replay_record = {
@@ -902,26 +1040,48 @@ def replay_sequence_frida(sequence_id):
         sequence_id: ID of the RepeaterSequence to replay
     
     Returns:
-        bool: True if all packets were sent successfully, False otherwise
+        list: Results of each packet replay operation
     """
-    global repeater_sequences
+    global repeater_sequences, is_running
     
     # Check if sequence exists
     if sequence_id not in repeater_sequences:
         print(f"Repeater sequence with ID {sequence_id} not found")
-        return False
+        repeater_console_window.add_log(
+            LogLevel.ERROR,
+            f"Sequence with ID {sequence_id} not found",
+            sequence_id=sequence_id
+        )
+        return [{"success": False, "error": f"Sequence with ID {sequence_id} not found"}]
+    
+    # Check if Frida is running
+    if not is_running:
+        print("Frida is not running")
+        repeater_console_window.add_log(
+            LogLevel.ERROR,
+            "Cannot replay sequence: Frida is not running",
+            sequence_id=sequence_id
+        )
+        return [{"success": False, "error": "Frida is not running"}]
     
     # Get the sequence
     sequence = repeater_sequences[sequence_id]
+    results = []
     
-    # Track overall success
-    all_success = True
+    # Log the start of sequence replay
+    repeater_console_window.add_log(
+        LogLevel.INFO,
+        f"Starting replay of sequence '{sequence.name}' with {len(sequence.packet_ids)} packets via Frida",
+        sequence_id=sequence_id
+    )
     
     # Replay each packet in the sequence
     for packet_id in sequence.packet_ids:
-        success = replay_packet_frida(packet_id)
-        if not success:
-            all_success = False
+        result = replay_packet_frida(packet_id)
+        results.append({"success": result, "packet_id": packet_id})
+        
+        # Small delay between packets
+        time.sleep(0.1)
     
     # Update last replayed timestamp
     sequence.last_replayed_at = time.time()
@@ -929,7 +1089,15 @@ def replay_sequence_frida(sequence_id):
     # Save state
     save_repeater_state()
     
-    return all_success
+    # Log completion of sequence replay
+    success_count = sum(1 for r in results if r["success"])
+    repeater_console_window.add_log(
+        LogLevel.INFO,
+        f"Completed replay of sequence '{sequence.name}': {success_count}/{len(results)} packets successful",
+        sequence_id=sequence_id
+    )
+    
+    return results
 
 def replay_sequence_direct(sequence_id, connection_params):
     """
@@ -940,26 +1108,48 @@ def replay_sequence_direct(sequence_id, connection_params):
         connection_params: Dictionary with connection parameters
     
     Returns:
-        bool: True if all packets were sent successfully, False otherwise
+        list: Results of each packet replay operation
     """
     global repeater_sequences
     
     # Check if sequence exists
     if sequence_id not in repeater_sequences:
         print(f"Repeater sequence with ID {sequence_id} not found")
-        return False
+        repeater_console_window.add_log(
+            LogLevel.ERROR,
+            f"Sequence with ID {sequence_id} not found",
+            sequence_id=sequence_id
+        )
+        return [{"success": False, "error": f"Sequence with ID {sequence_id} not found"}]
     
     # Get the sequence
     sequence = repeater_sequences[sequence_id]
+    results = []
     
-    # Track overall success
-    all_success = True
+    # Validate connection parameters
+    if not connection_params.get("host") and not connection_params.get("port"):
+        # We'll try to get connection info from each packet, so continue
+        repeater_console_window.add_log(
+            LogLevel.WARNING,
+            "No host/port specified in connection parameters, will try to use packet-specific connection info",
+            sequence_id=sequence_id
+        )
+    
+    # Log the start of sequence replay
+    protocol = connection_params.get("protocol", "TCP")
+    repeater_console_window.add_log(
+        LogLevel.INFO,
+        f"Starting replay of sequence '{sequence.name}' with {len(sequence.packet_ids)} packets via direct {protocol} connection",
+        sequence_id=sequence_id
+    )
     
     # Replay each packet in the sequence
     for packet_id in sequence.packet_ids:
-        success = replay_packet_direct(packet_id, connection_params)
-        if not success:
-            all_success = False
+        result = replay_packet_direct(packet_id, connection_params)
+        results.append({"success": result, "packet_id": packet_id})
+        
+        # Small delay between packets
+        time.sleep(0.1)
     
     # Update last replayed timestamp
     sequence.last_replayed_at = time.time()
@@ -967,7 +1157,15 @@ def replay_sequence_direct(sequence_id, connection_params):
     # Save state
     save_repeater_state()
     
-    return all_success
+    # Log completion of sequence replay
+    success_count = sum(1 for r in results if r["success"])
+    repeater_console_window.add_log(
+        LogLevel.INFO,
+        f"Completed replay of sequence '{sequence.name}': {success_count}/{len(results)} packets successful",
+        sequence_id=sequence_id
+    )
+    
+    return results
 
 def save_repeater_state():
     """Save repeater state to JSON file"""
@@ -1154,8 +1352,11 @@ def update_repeater_packet_data(sequence_id, hex_data):
     # Get the packet
     packet = repeater_packets[sequence_id]
     
-    # Update hex data
-    packet.modified_hex_data = hex_data
+    # Update hex data - ensure it's a string
+    if isinstance(hex_data, bytes):
+        packet.modified_hex_data = hex_data.hex()
+    else:
+        packet.modified_hex_data = hex_data
     
     # Mark as modified
     packet.is_modified = True
@@ -1692,7 +1893,12 @@ def select_repeater_packet(sender, app_data, user_data):
     try:
         # Get the hex data to display (use modified if available)
         hex_data = packet.modified_hex_data if packet.is_modified else packet.hex_data
-        data = bytes.fromhex(hex_data)
+        
+        # Convert hex_data to bytes, handling both string and bytes types
+        if isinstance(hex_data, bytes):
+            data = hex_data
+        else:
+            data = bytes.fromhex(hex_data)
         
         # Update the hexdump widget
         repeater_hexdump_widget.set_data(data, user_data, packet.metadata.get("markers", []))
@@ -1839,7 +2045,7 @@ def replay_current_repeater_packet():
         if not repeater_connection_params.get("host") or not repeater_connection_params.get("port"):
             print("Please set valid host and port in connection settings before replaying")
             # Show a message to the user
-            dpg.set_value("status_text", "Error: Please set valid host and port in connection settings")
+            dpg.set_value("status", "Error: Please set valid host and port in connection settings")
             return
         success = replay_packet_direct(current_repeater_packet_id, repeater_connection_params)
     
@@ -1862,7 +2068,7 @@ def replay_current_repeater_sequence():
         if not repeater_connection_params.get("host") or not repeater_connection_params.get("port"):
             print("Please set valid host and port in connection settings before replaying")
             # Show a message to the user
-            dpg.set_value("status_text", "Error: Please set valid host and port in connection settings")
+            dpg.set_value("status", "Error: Please set valid host and port in connection settings")
             return
         success = replay_sequence_direct(current_repeater_sequence_id, repeater_connection_params)
     
@@ -2182,6 +2388,7 @@ with dpg.window(label="Frida Network Interceptor", tag="main_window"):
                     # Replay buttons
                     dpg.add_button(label="Replay Packet", callback=lambda s, a: replay_current_repeater_packet(), tag="replay_packet_btn", enabled=False)
                     dpg.add_button(label="Replay Sequence", callback=lambda s, a: replay_current_repeater_sequence(), tag="replay_sequence_btn", enabled=False)
+                    dpg.add_button(label="Toggle Console", callback=lambda s, a: repeater_console_window.toggle_visibility(), tag="toggle_console_btn")
                 
                 # Direct connection settings (hidden by default)
                 with dpg.group(tag="repeater_direct_connection_settings", show=False):
@@ -2209,6 +2416,9 @@ load_repeater_state()
 
 # Update repeater UI with loaded state
 update_repeater_ui()
+
+# Initialize repeater console window
+repeater_console_window = RepeaterConsoleWindow()
 
 # Initialize packet type management buttons
 # update_packet_types_list()

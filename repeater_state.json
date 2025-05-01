@@ -1,125 +1,951 @@
 {
   "packets": {
-    "e71cbc39-f67c-4bbf-b54f-eaa1ff576218": {
-      "id": "e71cbc39-f67c-4bbf-b54f-eaa1ff576218",
-      "original_id": "2",
-      "sequence_id": "3df90488-4b27-4747-bb33-a8900f7f7856",
-      "hex_data": "12206cb015f634120a0608a3de98c006",
-      "modified_hex_data": "12206cb015f634120a0608a3de98c006",
+    "be4e6397-e555-4aa4-8ebc-93401609ed6a": {
+      "id": "be4e6397-e555-4aa4-8ebc-93401609ed6a",
+      "original_id": "31",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "00226cb05df63412",
+      "modified_hex_data": "00226cb05df63412",
       "metadata": {
         "function_name": "send",
         "direction": "send",
-        "socket_id": 6952,
+        "socket_id": 13476,
         "socket_info": "54.68.211.102:10000",
-        "buffer_length": 16,
+        "buffer_length": 8,
         "flags": 0,
-        "packet_type": "undefined",
+        "packet_type": "siezproto8",
         "backtrace": [
-          "0x7ff6c0d53562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
-          "0x7ff6bfda5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
-          "0x7ff6bfda92be -> google::protobuf::Message::GetReflection",
-          "0x7ff6be29a102 -> google::protobuf::DoubleValue::_internal_value",
-          "0x7ff6be325a07 -> google::protobuf::DoubleValue::_internal_value",
-          "0x7ff6be3e60c7 -> google::protobuf::BoolValue::clear_value",
-          "0x7ff6bfc1dde1 -> google::protobuf::strings::ArrayByteSource::Peek",
-          "0x7ff6bf8598dd -> google::protobuf::FieldDescriptor::default_value_string",
-          "0x7ff6c2884d92 -> google::protobuf::NullValue_IsValid",
-          "0x7ff6c289cf63 -> google::protobuf::NullValue_IsValid",
-          "0x7ff6c27a2621 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
-          "0x7ff6bfe56019 -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe5e44c -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe5e51a -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe5ffdc -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe6c114 -> google::protobuf::Message::GetReflection"
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a8bbc7e -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a831740 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a08c44b -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff71a019da0 -> google::protobuf::util::converter::ProtoWriter::ProtoElement::type",
+          "0x7ff719e7dc72 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff71a4b2eec -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71926e4a5 -> google::protobuf::MapIterator::GetKey",
+          "0x7ff7191953fc -> google::protobuf::EnumDescriptor::is_placeholder",
+          "0x7ff71bff788f -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff719201bb5 -> google::protobuf::OneofOptions::mutable_uninterpreted_option",
+          "0x7ff71cba3a6c -> google::protobuf::FileDescriptorProto::extension",
+          "0x7ff71cbab052 -> google::protobuf::FileDescriptorProto::extension",
+          "0x7ff71eea0604 -> google::protobuf::NullValue_IsValid"
         ],
         "markers": []
       },
       "is_modified": false,
-      "created_at": 1745363571.5873997,
-      "last_edited_at": 1745363571.5873997,
-      "replay_history": []
+      "created_at": 1746073209.2286375,
+      "last_edited_at": 1746073247.2764964,
+      "replay_history": [
+        {
+          "timestamp": 1746073247.2764964,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "5c226cb05ef63412124a0a05080410df030a05080610c70612230848103c183c20012801300138016002681478028a01027573980101a801c00cb0013c1a150a027573120c35342e36382e38342e31393518fb55",
+          "response_hex": "5c226cb05ef63412124a0a05080410df030a05080610c70612230848103c183c20012801300138016002681478028a01027573980101a801c00cb0013c1a150a027573120c35342e36382e38342e31393518fb55"
+        }
+      ]
     },
-    "b458caa0-fc1d-43d2-a394-f82cd8ca489e": {
-      "id": "b458caa0-fc1d-43d2-a394-f82cd8ca489e",
-      "original_id": "35",
-      "sequence_id": "3df90488-4b27-4747-bb33-a8900f7f7856",
-      "hex_data": "10206cb07af6341208f7bca6add2ddeced01",
-      "modified_hex_data": "10206cb07af6341208f7bca6add2ddeced01",
+    "89e94593-ee0e-4480-9807-0c65a1541ceb": {
+      "id": "89e94593-ee0e-4480-9807-0c65a1541ceb",
+      "original_id": "41",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "92226cb061f634121a644d7a49785155497851544574526a6b34526930304f4463774c554578513059744e55597a4d544d784d4556474e5449784f6a52424d7a4642516a45784c5467354d554d744e4559774d7931434f544a454c5463784e6a67334e6a56434e305a434f51413d2202656e322434363538444231332d343233382d313132432d344439392d3745414342383737463533313801",
+      "modified_hex_data": "92226cb061f634121a644d7a49785155497851544574526a6b34526930304f4463774c554578513059744e55597a4d544d784d4556474e5449784f6a52424d7a4642516a45784c5467354d554d744e4559774d7931434f544a454c5463784e6a67334e6a56434e305a434f51413d2202656e322434363538444231332d343233382d313132432d344439392d3745414342383737463533313801",
       "metadata": {
         "function_name": "send",
         "direction": "send",
-        "socket_id": 6952,
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 154,
+        "flags": 0,
+        "packet_type": "size_154_protobuf",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a89d708 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a832938 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a096a81 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff71a49f62e -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a44d2c2 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a45a8e8 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff7191f0a92 -> google::protobuf::MapValueConstRef::MapValueConstRef",
+          "0x7ff7191b8359 -> google::protobuf::internal::ArenaStringPtr::ArenaStringPtr",
+          "0x7ff71cba9f6b -> google::protobuf::FileDescriptorProto::extension",
+          "0x7ff71c0a886b -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2311478,
+      "last_edited_at": 1746073252.468954,
+      "replay_history": [
+        {
+          "timestamp": 1746073252.468954,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "02226cb070f63412080702226cb059f634121812",
+          "response_hex": "02226cb070f63412080702226cb059f634121812"
+        }
+      ]
+    },
+    "5d68a31c-26be-4158-86b4-f48d9d430f67": {
+      "id": "5d68a31c-26be-4158-86b4-f48d9d430f67",
+      "original_id": "51",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "00226cb035f63412",
+      "modified_hex_data": "00226cb035f63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a8bb8fe -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a831430 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a07881a -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff71a0712b2 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff719e35768 -> google::protobuf::DescriptorProto::reserved_range_size",
+          "0x7ff719e7dc72 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff71a83139c -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a83121e -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2346933,
+      "last_edited_at": 1746073253.0349548,
+      "replay_history": [
+        {
+          "timestamp": 1746073253.0349548,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
+    },
+    "b03a5c74-5a64-459a-afe9-b967be9eda65": {
+      "id": "b03a5c74-5a64-459a-afe9-b967be9eda65",
+      "original_id": "53",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "00226cb028f63412",
+      "modified_hex_data": "00226cb028f63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a831561 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a07a0b4 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff71a078935 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff71a0712b2 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff719e35768 -> google::protobuf::DescriptorProto::reserved_range_size",
+          "0x7ff719e7dc72 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff71a825f1c -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a825abe -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.237675,
+      "last_edited_at": 1746073258.1929677,
+      "replay_history": [
+        {
+          "timestamp": 1746073258.1929677,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
+    },
+    "ff9bdb9b-1ebc-4166-bdd6-84881ba05186": {
+      "id": "ff9bdb9b-1ebc-4166-bdd6-84881ba05186",
+      "original_id": "57",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "00226cb05af63412",
+      "modified_hex_data": "00226cb05af63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a8bbabe -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a831670 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a078aba -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff71a0712b2 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff719e35768 -> google::protobuf::DescriptorProto::reserved_range_size",
+          "0x7ff719e7dc72 -> google::protobuf::internal::GenericTypeHandler<google::protobuf::Message>::NewFromPrototype",
+          "0x7ff71a8267e2 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a82663e -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2411766,
+      "last_edited_at": 1746073263.3840349,
+      "replay_history": [
+        {
+          "timestamp": 1746073263.3840349,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "02226cb05cf634121003",
+          "response_hex": "02226cb05cf634121003"
+        }
+      ]
+    },
+    "146657fa-a06d-4eb8-9aa0-1c78c8f6619e": {
+      "id": "146657fa-a06d-4eb8-9aa0-1c78c8f6619e",
+      "original_id": "224",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "1a226cb07af6341208b1ddfd8583caeeed01",
+      "modified_hex_data": "1a226cb07af690909090ddfd8583caeeed01",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
         "socket_info": "54.68.211.102:10000",
         "buffer_length": 18,
         "flags": 0,
         "packet_type": "size_18_protobuf",
         "backtrace": [
-          "0x7ff6c0d53562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
-          "0x7ff6bfda5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
-          "0x7ff6bfda92be -> google::protobuf::Message::GetReflection",
-          "0x7ff6be607202 -> google::protobuf::RepeatedField<int>::operator[]",
-          "0x7ff6be60708e -> google::protobuf::RepeatedField<int>::operator[]",
-          "0x7ff6bfdad31a -> google::protobuf::Message::GetReflection",
-          "0x7ff6be299e45 -> google::protobuf::DoubleValue::_internal_value",
-          "0x7ff6be325a07 -> google::protobuf::DoubleValue::_internal_value",
-          "0x7ff6be3e60c7 -> google::protobuf::BoolValue::clear_value",
-          "0x7ff6bfc1dde1 -> google::protobuf::strings::ArrayByteSource::Peek",
-          "0x7ff6bf8598dd -> google::protobuf::FieldDescriptor::default_value_string",
-          "0x7ff6c2884d92 -> google::protobuf::NullValue_IsValid",
-          "0x7ff6c289cf63 -> google::protobuf::NullValue_IsValid",
-          "0x7ff6c27a2621 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
-          "0x7ff6bfe56019 -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe5e44c -> google::protobuf::Message::GetReflection"
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a82dc52 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a82dade -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection"
         ],
         "markers": []
       },
-      "is_modified": false,
-      "created_at": 1745363571.660294,
-      "last_edited_at": 1745363571.660294,
-      "replay_history": []
+      "is_modified": true,
+      "created_at": 1746073209.2441967,
+      "last_edited_at": 1746073268.725882,
+      "replay_history": [
+        {
+          "timestamp": 1746073234.0585594,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        },
+        {
+          "timestamp": 1746073268.725882,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
     },
-    "fea465bc-ed48-4c02-82fa-17a95bc703a5": {
-      "id": "fea465bc-ed48-4c02-82fa-17a95bc703a5",
-      "original_id": "36",
-      "sequence_id": "3df90488-4b27-4747-bb33-a8900f7f7856",
-      "hex_data": "12206cb015f634120a0608adde98c006",
-      "modified_hex_data": "12206cb015f634120a0608adde98c006",
+    "558d2a3d-f88f-4cf8-bef0-c68a0d29ee9e": {
+      "id": "558d2a3d-f88f-4cf8-bef0-c68a0d29ee9e",
+      "original_id": "225",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "18226cb015f634120a0608d0a7cac006",
+      "modified_hex_data": "18226cb015f634120a0608d0a7cac006",
       "metadata": {
         "function_name": "send",
         "direction": "send",
-        "socket_id": 6952,
+        "socket_id": 13476,
         "socket_info": "54.68.211.102:10000",
         "buffer_length": 16,
         "flags": 0,
         "packet_type": "undefined",
         "backtrace": [
-          "0x7ff6c0d53562 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
-          "0x7ff6bfda5d5b -> google::protobuf::RepeatedField<unsigned int>::rend",
-          "0x7ff6bfda92be -> google::protobuf::Message::GetReflection",
-          "0x7ff6be29a102 -> google::protobuf::DoubleValue::_internal_value",
-          "0x7ff6be325a07 -> google::protobuf::DoubleValue::_internal_value",
-          "0x7ff6be3e60c7 -> google::protobuf::BoolValue::clear_value",
-          "0x7ff6bfc1dde1 -> google::protobuf::strings::ArrayByteSource::Peek",
-          "0x7ff6bf8598dd -> google::protobuf::FieldDescriptor::default_value_string",
-          "0x7ff6c2884d92 -> google::protobuf::NullValue_IsValid",
-          "0x7ff6c289cf63 -> google::protobuf::NullValue_IsValid",
-          "0x7ff6c27a2621 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
-          "0x7ff6bfe56019 -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe5e44c -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe5e51a -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe5ffdc -> google::protobuf::Message::GetReflection",
-          "0x7ff6bfe6c114 -> google::protobuf::Message::GetReflection"
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b1c3a -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0be1c4 -> google::protobuf::Message::GetReflection"
         ],
         "markers": []
       },
       "is_modified": false,
-      "created_at": 1745363571.7209513,
-      "last_edited_at": 1745363571.7209513,
-      "replay_history": []
+      "created_at": 1746073209.2476962,
+      "last_edited_at": 1746073268.9301944,
+      "replay_history": [
+        {
+          "timestamp": 1746073268.9301944,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "18226cb016f634120a0608d0a7cac006",
+          "response_hex": "18226cb016f634120a0608d0a7cac006"
+        }
+      ]
     },
-    "bc18c8cb-5dbb-43b3-a1ab-601c9f566e9e": {
-      "id": "bc18c8cb-5dbb-43b3-a1ab-601c9f566e9e",
-      "original_id": "39",
-      "sequence_id": "3df90488-4b27-4747-bb33-a8900f7f7856",
-      "hex_data": "10206cb07af6341208e4e483ddd2ddeced01",
-      "modified_hex_data": 
+    "977c5ef3-d665-449b-adaa-d22258b92024": {
+      "id": "977c5ef3-d665-449b-adaa-d22258b92024",
+      "original_id": "228",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "1a226cb07af6341208c3e5deb583caeeed01",
+      "modified_hex_data": "1a226cb07af6341208c3e5deb583caeeed01",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 18,
+        "flags": 0,
+        "packet_type": "size_18_protobuf",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a82dc52 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a82dade -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2522018,
+      "last_edited_at": 1746073274.153315,
+      "replay_history": [
+        {
+          "timestamp": 1746073274.153315,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
+    },
+    "e3045507-b509-4730-a814-8daa7e26f1d0": {
+      "id": "e3045507-b509-4730-a814-8daa7e26f1d0",
+      "original_id": "229",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "18226cb015f634120a0608daa7cac006",
+      "modified_hex_data": "18226cb015f634120a0608daa7cac006",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 16,
+        "flags": 0,
+        "packet_type": "undefined",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b1c3a -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0be1c4 -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2572196,
+      "last_edited_at": 1746073279.3358219,
+      "replay_history": [
+        {
+          "timestamp": 1746073279.3358219,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "18226cb016f634120a0608daa7cac006",
+          "response_hex": "18226cb016f634120a0608daa7cac006"
+        }
+      ]
+    },
+    "3a88934d-4d48-46f5-8c0a-7d9acbbb327a": {
+      "id": "3a88934d-4d48-46f5-8c0a-7d9acbbb327a",
+      "original_id": "232",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "1a226cb07af6341208b5e4c3e583caeeed01",
+      "modified_hex_data": "1a226cb07af6341208b5e4c3e583caeeed01",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 18,
+        "flags": 0,
+        "packet_type": "size_18_protobuf",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a82dc52 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a82dade -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2612154,
+      "last_edited_at": 1746073284.5391393,
+      "replay_history": [
+        {
+          "timestamp": 1746073284.5391393,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
+    },
+    "d0643bed-20be-4dbd-b4e7-fad549e6c637": {
+      "id": "d0643bed-20be-4dbd-b4e7-fad549e6c637",
+      "original_id": "233",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "18226cb015f634120a0608e4a7cac006",
+      "modified_hex_data": "18226cb015f634120a0608e4a7cac006",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 16,
+        "flags": 0,
+        "packet_type": "undefined",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b1c3a -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0be1c4 -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2662432,
+      "last_edited_at": 1746073289.7175772,
+      "replay_history": [
+        {
+          "timestamp": 1746073289.7175772,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "18226cb016f634120a0608e4a7cac006",
+          "response_hex": "18226cb016f634120a0608e4a7cac006"
+        }
+      ]
+    },
+    "9da21861-a5bb-4282-a623-eb90a2cd5b47": {
+      "id": "9da21861-a5bb-4282-a623-eb90a2cd5b47",
+      "original_id": "236",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "1a226cb07af6341208b5e5a69584caeeed01",
+      "modified_hex_data": "1a226cb07af6341208b5e5a69584caeeed01",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 18,
+        "flags": 0,
+        "packet_type": "size_18_protobuf",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a82dc52 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a82dade -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2727664,
+      "last_edited_at": 1746073294.9785774,
+      "replay_history": [
+        {
+          "timestamp": 1746073294.9785774,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
+    },
+    "f6e29136-ccc7-478f-935f-ca63358e0035": {
+      "id": "f6e29136-ccc7-478f-935f-ca63358e0035",
+      "original_id": "237",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "18226cb015f634120a0608eea7cac006",
+      "modified_hex_data": "18226cb015f634120a0608eea7cac006",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 16,
+        "flags": 0,
+        "packet_type": "undefined",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b1c3a -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0be1c4 -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.27834,
+      "last_edited_at": 1746073300.1524193,
+      "replay_history": [
+        {
+          "timestamp": 1746073300.1524193,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "18226cb016f634120a0608eea7cac006",
+          "response_hex": "18226cb016f634120a0608eea7cac006"
+        }
+      ]
+    },
+    "3fa50b84-323c-45af-b279-7f00147888eb": {
+      "id": "3fa50b84-323c-45af-b279-7f00147888eb",
+      "original_id": "239",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "00226cb05df63412",
+      "modified_hex_data": "00226cb05df63412",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 8,
+        "flags": 0,
+        "packet_type": "siezproto8",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a8bbc7e -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a831740 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a08aa50 -> google::protobuf::DescriptorPool::InternalDontEnforceDependencies",
+          "0x7ff71cba9f6b -> google::protobuf::FileDescriptorProto::extension",
+          "0x7ff71c0a886b -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0be1c4 -> google::protobuf::Message::GetReflection",
+          "0x7ff71fd1881e -> agsCheckDriverVersion",
+          "0x7ffa25ab259d -> BaseThreadInitThunk",
+          "0x7ffa2730af38 -> RtlUserThreadStart"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.283358,
+      "last_edited_at": 1746073305.5304842,
+      "replay_history": [
+        {
+          "timestamp": 1746073305.5304842,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "5c226cb05ef63412124a0a05080410df030a05080610c70612230848103c183c20012801300138016002681478028a01027573980101a801c00cb0013c1a150a027573120c35342e36382e38342e31393518fb55",
+          "response_hex": "5c226cb05ef63412124a0a05080410df030a05080610c70612230848103c183c20012801300138016002681478028a01027573980101a801c00cb0013c1a150a027573120c35342e36382e38342e31393518fb55"
+        }
+      ]
+    },
+    "a846e9b4-4509-4367-88c9-f9fd1c50c4a2": {
+      "id": "a846e9b4-4509-4367-88c9-f9fd1c50c4a2",
+      "original_id": "254",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "1a226cb07af6341208d99a8bc584caeeed01",
+      "modified_hex_data": "1a226cb07af6341208d99a8bc584caeeed01",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 18,
+        "flags": 0,
+        "packet_type": "size_18_protobuf",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a82dc52 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a82dade -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2888837,
+      "last_edited_at": 1746073310.784666,
+      "replay_history": [
+        {
+          "timestamp": 1746073310.784666,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
+    },
+    "8ca44caf-bb77-4b5d-bc35-f5c1988f5b3d": {
+      "id": "8ca44caf-bb77-4b5d-bc35-f5c1988f5b3d",
+      "original_id": "255",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "18226cb015f634120a0608f8a7cac006",
+      "modified_hex_data": "18226cb015f634120a0608f8a7cac006",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 16,
+        "flags": 0,
+        "packet_type": "undefined",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b1c3a -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0be1c4 -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.2943847,
+      "last_edited_at": 1746073316.000608,
+      "replay_history": [
+        {
+          "timestamp": 1746073316.000608,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "18226cb016f634120a0608f8a7cac006",
+          "response_hex": "18226cb016f634120a0608f8a7cac006"
+        }
+      ]
+    },
+    "92094e1a-ecfb-47de-b63c-db1d14310a6d": {
+      "id": "92094e1a-ecfb-47de-b63c-db1d14310a6d",
+      "original_id": "258",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "1a226cb07af6341208e698eaf484caeeed01",
+      "modified_hex_data": "1a226cb07af6341208e698eaf484caeeed01",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 18,
+        "flags": 0,
+        "packet_type": "size_18_protobuf",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a82dc52 -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71a82dade -> google::protobuf::RepeatedField<int>::operator[]",
+          "0x7ff71bffdeca -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b18f5 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.300408,
+      "last_edited_at": 1746073321.3078866,
+      "replay_history": [
+        {
+          "timestamp": 1746073321.3078866,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": null,
+          "response_hex": null
+        }
+      ]
+    },
+    "ddffa05f-647b-4193-a4a4-71aac309807e": {
+      "id": "ddffa05f-647b-4193-a4a4-71aac309807e",
+      "original_id": "259",
+      "sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "hex_data": "18226cb015f634120a060882a8cac006",
+      "modified_hex_data": "18226cb015f634120a060882a8cac006",
+      "metadata": {
+        "function_name": "send",
+        "direction": "send",
+        "socket_id": 13476,
+        "socket_info": "54.68.211.102:10000",
+        "buffer_length": 16,
+        "flags": 0,
+        "packet_type": "undefined",
+        "backtrace": [
+          "0x7ff71cfa6e62 -> google::protobuf::internal::TypeDefinedMapFieldBase<google::protobuf::MapKey,google::protobuf::MapValueRef>::InternalGetIterator",
+          "0x7ff71bff5c4b -> google::protobuf::RepeatedField<__int64>::rend",
+          "0x7ff71bff91de -> google::protobuf::Message::GetReflection",
+          "0x7ff71a4b1c3a -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a53cd48 -> google::protobuf::DoubleValue::_internal_value",
+          "0x7ff71a5ef7d7 -> google::protobuf::BoolValue::SharedCtor",
+          "0x7ff71be6c5e1 -> google::protobuf::strings::ArrayByteSource::Peek",
+          "0x7ff71baa2a3d -> google::protobuf::util::converter::ProtoWriter::stream",
+          "0x7ff71eadc682 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71eaf4893 -> google::protobuf::NullValue_IsValid",
+          "0x7ff71e9f9d11 -> google::protobuf::util::converter::JsonObjectWriter::Element::is_json_object",
+          "0x7ff71c0a80c9 -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b04fc -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b05ca -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0b208c -> google::protobuf::Message::GetReflection",
+          "0x7ff71c0be1c4 -> google::protobuf::Message::GetReflection"
+        ],
+        "markers": []
+      },
+      "is_modified": false,
+      "created_at": 1746073209.3069515,
+      "last_edited_at": 1746073326.4876573,
+      "replay_history": [
+        {
+          "timestamp": 1746073326.4876573,
+          "mode": "direct",
+          "protocol": "TCP",
+          "host": "54.68.211.102",
+          "port": 10000,
+          "success": true,
+          "response": "18226cb016f634120a060882a8cac006",
+          "response_hex": "18226cb016f634120a060882a8cac006"
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "f44de080-d13e-4fc8-b4b2-2c09809e1fde": {
+      "id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde",
+      "name": "Filtered Sequence 1",
+      "packet_ids": [
+        "be4e6397-e555-4aa4-8ebc-93401609ed6a",
+        "89e94593-ee0e-4480-9807-0c65a1541ceb",
+        "5d68a31c-26be-4158-86b4-f48d9d430f67",
+        "b03a5c74-5a64-459a-afe9-b967be9eda65",
+        "ff9bdb9b-1ebc-4166-bdd6-84881ba05186",
+        "146657fa-a06d-4eb8-9aa0-1c78c8f6619e",
+        "558d2a3d-f88f-4cf8-bef0-c68a0d29ee9e",
+        "977c5ef3-d665-449b-adaa-d22258b92024",
+        "e3045507-b509-4730-a814-8daa7e26f1d0",
+        "3a88934d-4d48-46f5-8c0a-7d9acbbb327a",
+        "d0643bed-20be-4dbd-b4e7-fad549e6c637",
+        "9da21861-a5bb-4282-a623-eb90a2cd5b47",
+        "f6e29136-ccc7-478f-935f-ca63358e0035",
+        "3fa50b84-323c-45af-b279-7f00147888eb",
+        "a846e9b4-4509-4367-88c9-f9fd1c50c4a2",
+        "8ca44caf-bb77-4b5d-bc35-f5c1988f5b3d",
+        "92094e1a-ecfb-47de-b63c-db1d14310a6d",
+        "ddffa05f-647b-4193-a4a4-71aac309807e"
+      ],
+      "created_at": 1746073209.2286375,
+      "last_replayed_at": 1746073331.7019525
+    }
+  },
+  "connection_mode": "direct",
+  "connection_params": {
+    "host": "54.68.211.102",
+    "port": 10000,
+    "protocol": "TCP",
+    "timeout": 5.0,
+    "custom_params": {}
+  },
+  "current_packet_id": "146657fa-a06d-4eb8-9aa0-1c78c8f6619e",
+  "current_sequence_id": "f44de080-d13e-4fc8-b4b2-2c09809e1fde"
+}

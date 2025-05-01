@@ -42,3 +42,21 @@ Create dedicated documentation for biodiff algorithms in a separate markdown fil
 * Updated README.md to include a section on binary diffing capabilities
 * Added link from README.md to the detailed documentation
 * Updated Memory Bank to reflect the new documentation
+[2025-04-30 15:05:51] - Fixed Frida mode replay error by updating status widget references
+
+## Decision
+
+Fix the error that occurs when trying to replay packets or packet sequences in the repeater tab with Frida mode by updating widget references.
+
+## Rationale 
+
+* The error occurred because the code was trying to set the value of a widget with the tag "status_text", but this widget doesn't exist
+* The application already has a status widget with the tag "status" that is used to display application status
+* Using the existing "status" widget is simpler than creating a new "status_text" widget
+
+## Implementation Details
+
+* Modified the replay_current_repeater_packet() and replay_current_repeater_sequence() functions to use the existing "status" widget instead of the non-existent "status_text" widget
+* Changed dpg.set_value("status_text", "Error: Please set valid host and port in connection settings") to dpg.set_value("status", "Error: Please set valid host and port in connection settings")
+
+---
