@@ -8,3 +8,4 @@ ruamel.yaml>=0.17.21
 bsdiff4>=1.2.4
 biopython>=1.83
 pywfa>=0.3.0
+protobuf>=4.25.0

@@ -60,3 +60,26 @@ Fix the error that occurs when trying to replay packets or packet sequences in t
 * Changed dpg.set_value("status_text", "Error: Please set valid host and port in connection settings") to dpg.set_value("status", "Error: Please set valid host and port in connection settings")
 
 ---
+
+## Decision
+
+Integrate protobuf-inspector functionality into the fridafuzzer application to enable analysis of Protocol Buffer data.
+
+## Rationale
+
+* Protocol Buffers are a common binary format used in many network protocols
+* Providing a dedicated analysis tool improves the application's utility for reverse engineering
+* Integration with the existing hexdump widget maintains a consistent user experience
+* Bidirectional highlighting helps users understand the relationship between binary data and structured messages
+
+## Implementation Details
+
+* Added protobuf_analyzer.py for parsing and analyzing protobuf data
+* Added protobuf_window.py for displaying the parsed protobuf structure
+* Modified hexdump_widget.py to add a context menu option for protobuf analysis
+* Implemented bidirectional highlighting between the hexdump view and protobuf tree
+* Added protobuf dependency to requirements.txt
+
+[2025-05-01 17:16:00] - Integrated protobuf-inspector functionality
+
+---

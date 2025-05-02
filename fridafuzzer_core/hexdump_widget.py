@@ -13,6 +13,7 @@ from .entropy_window import EntropyWindow
 from .frequency_window import FrequencyWindow
 from .ksy_editor_window import KsyEditorWindow # Keep for editing
 from .marker_editor_window import MarkerEditorWindow
+from .protobuf_window import ProtobufInspectorWindow
 
 @dataclass
 class MarkedRegion: # Keep for potential future use or reference, though KSY is primary now
@@ -82,10 +83,13 @@ class HexdumpWidget:
         self.options = HexdumpOptions()
         # Mapping of byte offset to RGBA color for diff highlighting
         self.diff_highlights: Dict[int, Tuple[int, int, int, int]] = {}
+        # Mapping of byte offset to RGBA color for protobuf field highlighting
+        self.protobuf_highlights: Dict[int, Tuple[int, int, int, int]] = {}
 
         # Initialize analysis windows
         self.entropy_window = None
         self.frequency_window = None
+        self.protobuf_window = None  # Initialize protobuf window
         # Removed KSY editor window initialization
         self.addr_input = ""  # For goto address feature
         self.hovered_offset: Optional[int] = None  # For tooltips
@@ -247,6 +251,17 @@ class HexdumpWidget:
                 )
                 with dpg.tooltip(dpg.last_item()):
                     dpg.add_text("Show frequency analysis of selected bytes")
+                
+                # Add protobuf analysis menu item
+                self.protobuf_menu_tag = f"{self.tag}_protobuf_menu_{dpg.generate_uuid()}"
+                dpg.add_menu_item(
+                    label="Analyze as Protobuf",
+                    callback=self._show_protobuf_analysis,
+                    enabled=True,
+                    tag=self.protobuf_menu_tag
+                )
+                with dpg.tooltip(dpg.last_item()):
+                    dpg.add_text("Show Protocol Buffer analysis of selected bytes")
 
                 # Add KSY editor button as a standalone element
                 dpg.add_separator()
@@ -551,6 +566,21 @@ class HexdumpWidget:
             self.frequency_window.show()
         except Exception as e:
             print(f"Error showing frequency analysis: {e}")
+            
+    def _show_protobuf_analysis(self):
+        """Show protobuf analysis window for selected bytes."""
+        if not self.current_selection:
+            return
+        
+        try:
+            # Create protobuf window if it doesn't exist
+            if not self.protobuf_window:
+                self.protobuf_window = ProtobufInspectorWindow(self)
+            
+            # Show the window and update tree
+            self.protobuf_window.show()
+        except Exception as e:
+            print(f"Error showing protobuf analysis: {e}")
 
     def _update_analysis_menu_items(self):
         """Update the enabled state of analysis menu items."""
@@ -568,12 +598,13 @@ class HexdumpWidget:
                 enabled=self.current_selection is not None
             )
             
-        # Update modify bytes menu item
-        if dpg.does_item_exist(f"{self.tag}_modify_bytes_menu"):
+        # Update protobuf menu item
+        if hasattr(self, 'protobuf_menu_tag') and dpg.does_item_exist(self.protobuf_menu_tag):
             dpg.configure_item(
-                f"{self.tag}_modify_bytes_menu",
+                self.protobuf_menu_tag,
                 enabled=self.current_selection is not None
             )
+            
         # Update modify bytes menu item
         if dpg.does_item_exist(f"{self.tag}_modify_bytes_menu"):
             dpg.configure_item(
@@ -1362,6 +1393,27 @@ class HexdumpWidget:
             if offset not in self.diff_highlights:
                 self.same_highlights[offset] = same_color
         self.render() # Trigger redraw after highlights are set
+        
+    def highlight_protobuf_field(self, start_offset: int, end_offset: int):
+        """
+        Highlight bytes corresponding to a protobuf field.
+        
+        Args:
+            start_offset: Start byte offset
+            end_offset: End byte offset
+        """
+        # Clear previous protobuf highlights
+        self.protobuf_highlights = {}
+        
+        # Set highlight color (light blue)
+        highlight_color = (100, 200, 255, 100)
+        
+        # Add highlights for each byte in the range
+        for offset in range(start_offset, end_offset + 1):
+            self.protobuf_highlights[offset] = highlight_color
+        
+        # Trigger redraw
+        self.render()
     def render(self):
         """Render the hexdump display."""
         if not self.data:
@@ -1420,14 +1472,24 @@ class HexdumpWidget:
                 byte_x = hex_x + (j * 3 + group_idx * 2) * char_width
                 byte_offset = i + j
 
-                # --- DIFF/SAME HIGHLIGHT LAYERING ---
-                # Draw diff highlight if present, else same highlight if present
+                # --- HIGHLIGHT LAYERING ---
+                # Draw highlights in order of priority: diff > protobuf > same
                 diff_color = self.diff_highlights.get(byte_offset)
+                protobuf_color = self.protobuf_highlights.get(byte_offset)
                 same_color = getattr(self, "same_highlights", {}).get(byte_offset) if hasattr(self, "same_highlights") else None
-                if diff_color or same_color:
+                
+                if diff_color or protobuf_color or same_color:
                     highlight_width = char_width * 2.5
                     highlight_height = char_height
-                    color = diff_color if diff_color else same_color
+                    
+                    # Determine which color to use based on priority
+                    if diff_color:
+                        color = diff_color
+                    elif protobuf_color:
+                        color = protobuf_color
+                    else:
+                        color = same_color
+                    
                     dpg.draw_rectangle(
                         parent=self.canvas,
                         pmin=(byte_x, line_y),

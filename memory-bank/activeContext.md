@@ -10,6 +10,7 @@
 * Maintain offset-accurate KSY definitions with skip fields
 * Enable marking fields as fuzzable
 * Synchronize KSY edits with packet type manager
+* Integrate protobuf analysis capabilities for binary data inspection
 
 ## Recent Changes
 
@@ -20,6 +21,7 @@
 * Created documentation for biodiff algorithms (2025-04-12)
 * Updated README.md to include biodiff capabilities (2025-04-12)
 * Fixed Frida mode replay error by updating status widget references (2025-04-30)
+* Added protobuf analysis capability with bidirectional highlighting (2025-05-01)
 
 ## Open Questions/Issues
 
