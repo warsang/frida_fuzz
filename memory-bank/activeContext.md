@@ -28,3 +28,4 @@
 * How to best support nested types and complex KSY features interactively
 * How to visualize fuzzable fields more clearly
 * How to handle KSY validation errors gracefully
+[2025-05-06 11:58:00] - Implemented process selection dropdown feature in the Frida Network Interceptor application. This replaces the text input for target process with a dropdown that lists all running processes, making it easier for users to select a process to attach to.

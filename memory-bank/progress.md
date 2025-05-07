@@ -27,3 +27,17 @@
 * Improve error handling and validation
 * Integrate fuzzing workflows with KSY editing
 * Enhance visualization of fuzzable fields
+[2025-05-06 12:00:00] - Implemented process selection dropdown feature
+
+**Changes made:**
+1. Added `get_process_list()` function to `fridafuzzer_core/frida_handler.py` to retrieve a list of running processes using Frida's API.
+2. Added a global `process_map` variable in `app.py` to map display strings to PIDs.
+3. Replaced the text input with a dropdown and added a refresh button in the UI.
+4. Implemented `populate_process_dropdown()` and `refresh_process_list()` functions.
+5. Updated `start_intercepting()` and `stop_intercepting()` functions to work with the new dropdown.
+6. Added code to populate the process dropdown when the application starts.
+
+**Benefits:**
+- Improved user experience by providing a list of available processes
+- Reduced errors by eliminating manual PID entry
+- Added ability to refresh the process list without restarting the application

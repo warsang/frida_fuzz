@@ -327,3 +327,27 @@ def stop_frida():
 #             continue
 #         except Exception as e:
 #             print(f"Error in message processing thread: {e}", file=sys.stderr)
+
+def get_process_list():
+    """
+    Get a list of running processes that Frida can attach to.
+    
+    Returns:
+        list: A list of tuples (process_name, pid, display_string)
+              Returns an empty list if an error occurs.
+    """
+    try:
+        device = frida.get_local_device()
+        processes = device.enumerate_processes()
+        process_list = []
+        for process in processes:
+            display_string = f"{process.name} ({process.pid})"
+            process_list.append((process.name, process.pid, display_string))
+        process_list.sort(key=lambda x: x[0].lower())  # Sort alphabetically by process name
+        return process_list
+    except frida.TransportError as e:
+        print(f"Frida transport error: {e}", file=sys.stderr)
+        return []
+    except Exception as e:
+        print(f"Error getting process list: {e}", file=sys.stderr)
+        return []

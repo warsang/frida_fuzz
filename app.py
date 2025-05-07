@@ -49,6 +49,7 @@ is_running = False
 target_process = ""
 current_sequence = None  # Store current sequence for filter operations
 packet_type_manager = PacketTypeManager()
+process_map = {}  # To map display_string to PID
 
 # Diff view state
 diff_source_1_data: Optional[bytes] = None
@@ -139,25 +140,74 @@ def process_messages():
             import traceback
             print(traceback.format_exc())
 
+def populate_process_dropdown():
+    """
+    Populate the process dropdown with a list of running processes.
+    
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    global process_map
+    process_map = {}
+    try:
+        process_list_tuples = frida_handler.get_process_list()  # Expects list of (name, pid, display_string)
+        
+        display_strings = []
+        if not process_list_tuples:
+            dpg.configure_item("process_dropdown", items=["No processes found or Frida error"])
+            return False
+        
+        for _, pid_val, display_str_val in process_list_tuples:
+            display_strings.append(display_str_val)
+            process_map[display_str_val] = pid_val
+        
+        dpg.configure_item("process_dropdown", items=display_strings)
+        if display_strings:  # Set a default selection if list is not empty
+            dpg.set_value("process_dropdown", display_strings[0])
+        return True
+    except Exception as e:
+        print(f"Error populating process dropdown: {e}")
+        dpg.configure_item("process_dropdown", items=["Error loading processes"])
+        return False
+
+def refresh_process_list(sender, app_data):
+    """
+    Callback for the Refresh button. Updates the process dropdown.
+    """
+    dpg.configure_item("refresh_button", enabled=False)
+    success = populate_process_dropdown()
+    dpg.configure_item("refresh_button", enabled=True)
+    if success and process_map:  # Check if process_map is populated
+        dpg.set_value("status", "Process list refreshed")
+    elif success and not process_map:
+        dpg.set_value("status", "Process list refreshed (empty or Frida error)")
+    else:
+        dpg.set_value("status", "Failed to refresh process list")
 def start_intercepting(sender, app_data):
     """Start Frida interception"""
-    global is_running, target_process
+    global is_running, target_process, process_map
     if not is_running:
-        target = dpg.get_value("target_input").strip()
-        if target:
-            try:
-                target = int(target)
-            except ValueError:
-                pass
-            
-            success = frida_handler.start_frida(target, message_queue)
-            if success:
-                is_running = True
-                target_process = target
-                dpg.set_value("status", f"Running: Intercepting {target}")
-                dpg.configure_item("start_button", enabled=False)
-                dpg.configure_item("stop_button", enabled=True)
-                dpg.configure_item("target_input", enabled=False)
+        selected_label = dpg.get_value("process_dropdown")
+        
+        if not selected_label or selected_label in ["No processes found or Frida error", "Error loading processes"]:
+            dpg.set_value("status", "No process selected or error in list.")
+            return
+        
+        target = process_map.get(selected_label)  # Get PID from map
+        
+        if target is None:  # Should not happen if map is correct and label is valid
+            dpg.set_value("status", "Selected process PID not found. Try refreshing.")
+            return
+        
+        success = frida_handler.start_frida(target, message_queue)
+        if success:
+            is_running = True
+            target_process = target  # Store PID
+            dpg.set_value("status", f"Running: Intercepting {selected_label}")
+            dpg.configure_item("start_button", enabled=False)
+            dpg.configure_item("stop_button", enabled=True)
+            dpg.configure_item("process_dropdown", enabled=False)
+            dpg.configure_item("refresh_button", enabled=False)  # Disable refresh while running
 
 def stop_intercepting(sender, app_data):
     """Stop Frida interception"""
@@ -168,7 +218,8 @@ def stop_intercepting(sender, app_data):
         dpg.set_value("status", "Stopped")
         dpg.configure_item("start_button", enabled=True)
         dpg.configure_item("stop_button", enabled=False)
-        dpg.configure_item("target_input", enabled=True)
+        dpg.configure_item("process_dropdown", enabled=True)
+        dpg.configure_item("refresh_button", enabled=True)
 
 def set_callstack_filter(sender, app_data):
     """Set the callstack filter from the currently selected sequence"""
@@ -2092,7 +2143,11 @@ dpg.setup_dearpygui()
 with dpg.window(label="Frida Network Interceptor", tag="main_window"):
     # Control panel
     with dpg.group(horizontal=True):
-        dpg.add_input_text(label="Target Process/PID", tag="target_input", width=200)
+        dpg.add_text("Target Process:")
+        dpg.add_combo(items=[], tag="process_dropdown", width=300)
+        dpg.add_button(label="Refresh", callback=refresh_process_list, tag="refresh_button")
+        with dpg.tooltip("process_dropdown"):
+            dpg.add_text("Select a process to attach Frida to. Click Refresh to update the list.")
         dpg.add_button(label="Start", callback=start_intercepting, tag="start_button")
         dpg.add_button(label="Stop", callback=stop_intercepting, tag="stop_button", enabled=False)
         dpg.add_text("Stopped", tag="status")
@@ -2434,6 +2489,9 @@ def save_on_exit():
     save_repeater_state()
 
 dpg.set_exit_callback(save_on_exit)
+
+# Initialize process dropdown
+populate_process_dropdown()
 
 # Show the GUI
 dpg.show_viewport()
